@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 class PasswordLogin extends StatelessWidget {
-  const PasswordLogin({super.key});
+  final TextEditingController passwordcontroller;
+  const PasswordLogin({super.key, required this.passwordcontroller});
 
   @override
   Widget build(BuildContext context) {
-    final textControler= TextEditingController();
+    //final textControler= TextEditingController();
     final focusNode = FocusNode();
 
     final outlineInputBorder = UnderlineInputBorder(
@@ -25,7 +26,8 @@ class PasswordLogin extends StatelessWidget {
          // final textValue= textControler.value.text;
           // ignore: avoid_print
          // print('butoom: $textValue');
-        //  textControler.clear();
+         // textControler.clear();
+  //       passwordcontroller.clear();
         },
       ),
     );
@@ -35,12 +37,14 @@ class PasswordLogin extends StatelessWidget {
     return TextFormField(
       //keyboardType: , correo
       focusNode: focusNode,
-      controller: textControler,
+     // controller: textControler,
+      controller: passwordcontroller,
       decoration: inputDecoration,
       onFieldSubmitted: (value) {   //recibir parametros
         // ignore: avoid_print
-        print('submit: $value');
-        textControler.clear();
+        //print('submit: $value');
+        //textControler.clear();
+      //  passwordcontroller.clear();
         focusNode.requestFocus();
       },
   /*    onChanged: (value) {
