@@ -55,7 +55,7 @@ class _BodyLoginState extends State<BodyLogin>{
       _isloading=true;
     });
    
-    const String moodleUrl ='https://10.0.2.2/tesismovil/login/token.php';
+    const String moodleUrl ='http://192.168.1.45/tesismovil/login/token.php';
    // const String moodleUrl = 'http://10.0.2.2/tesismovil/login/token.php';
     const String service = 'my_Api';
 
@@ -70,8 +70,8 @@ class _BodyLoginState extends State<BodyLogin>{
         },
       );
 
-        print('CÓDIGO DE ESTADO: ${response.statusCode}');
-  print('RESPUESTA DEL SERVIDOR: ${response.body}');
+  //      print('CÓDIGO DE ESTADO: ${response.statusCode}');
+ // print('RESPUESTA DEL SERVIDOR: ${response.body}');
 
     final Map<String, dynamic> responseData= jsonDecode(response.body);
 
