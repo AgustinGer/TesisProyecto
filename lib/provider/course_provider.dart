@@ -1,60 +1,63 @@
-// Crea un archivo providers/courses_provider.dart
+// archivo: providers/courses_provider.dart
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_tesis/provider/auth_provider.dart';
 import 'package:http/http.dart' as http;
-import '../models/course.dart'; // Importa tu modelo
+import '../models/course.dart';
 
-final coursesProvider = FutureProvider.family<List<Course>, Map<String, String>>((ref, params) async {
-  final token = params['token']!;
-  final email = params['email']!;
 
-  const moodleApiUrl = 'https://192.168.1.45/tesismovil/webservice/rest/server.php';
-  
-  // --- PASO 1: Obtener el ID del Usuario ---
-  final userResponse = await http.post(
-    Uri.parse(moodleApiUrl),
-    body: {
-      'wstoken': token,
-      'wsfunction': 'core_user_get_users_by_field',
-      'moodlewsrestformat': 'json',
-      'field': 'email',
-      'values[0]': email,
-    },
-  );
 
-  if (userResponse.statusCode != 200) {
-    throw Exception('Error al obtener datos del usuario');
+// 1. Es un FutureProvider simple, ya no es un .family. Devuelve una lista de Cursos.
+final coursesProvider = FutureProvider<List<Course>>((ref) async {
+
+  // 2. Lee el token y el ID de los providers de autenticación.
+  final token = ref.watch(authTokenProvider);
+  final userId = ref.watch(userIdProvider);
+
+  // 3. Si no hay token o ID (el usuario no ha iniciado sesión), no hace nada.
+  //    Esto es crucial para evitar errores cuando la app recién arranca.
+  if (token == null || userId == null) {
+    return []; // Devuelve una lista vacía.
   }
 
-  final userData = json.decode(userResponse.body);
-  if (userData['users'] == null || (userData['users'] as List).isEmpty) {
-    throw Exception('Usuario no encontrado');
-  }
-  final userId = userData['users'][0]['id'].toString();
+    print('--- VERIFICACIÓN DE DATOS PARA OBTENER CURSOS ---');
+  print('Usando Token: $token');
+  print('Usando UserID: $userId');
+  print('-------------------------------------------');
 
-  // --- PASO 2: Obtener los Cursos del Usuario ---
-  final coursesResponse = await http.post(
+  const String moodleApiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php'; // Usa tu IP real
+
+  // 4. Su única responsabilidad: llamar a la API para obtener los cursos del usuario.
+  final response = await http.post(
     Uri.parse(moodleApiUrl),
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
     body: {
       'wstoken': token,
       'wsfunction': 'core_enrol_get_users_courses',
       'moodlewsrestformat': 'json',
-      'userid': userId,
+      'userid': userId.toString(), // El ID del usuario debe ser un String
     },
   );
 
-  if (coursesResponse.statusCode != 200) {
-    throw Exception('Error al obtener los cursos');
+  if (response.statusCode != 200) {
+    throw Exception('Error al obtener los cursos del servidor');
   }
 
-  final List coursesData = json.decode(coursesResponse.body);
+  // Si la respuesta no es un JSON, podría ser un error de PHP en el servidor
+  if (!response.headers['content-type']!.contains('application/json')) {
+    throw Exception('El servidor no respondió con un JSON. Respuesta: ${response.body}');
+  }
+
+  final List<dynamic> coursesData = json.decode(response.body);
+
   if (coursesData.isEmpty) {
-    return []; // Devuelve una lista vacía si el usuario no tiene cursos
+    return []; // Devuelve lista vacía si no está inscrito en cursos.
   }
 
-  // Filtramos el curso de la página principal (id: 1)
+  // Mapea la respuesta JSON a una lista de objetos Course
+  // y filtra el curso de la página principal (que suele tener id: 1)
   final coursesList = coursesData
-      .where((courseJson) => courseJson['id'] != 1) 
+      .where((courseJson) => courseJson['id'] != 1)
       .map((courseJson) => Course.fromJson(courseJson))
       .toList();
 

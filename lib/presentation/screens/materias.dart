@@ -1,8 +1,80 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_tesis/listas/pruebas/listas_pruebas.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+//import 'package:flutter_tesis/listas/pruebas/listas_pruebas.dart';
+import 'package:flutter_tesis/provider/course_content_provider.dart';
+//import 'package:go_router/go_router.dart';
 
-class Materias extends StatelessWidget {
+// archivo: materias.dart
+
+// 1. El widget ahora es un ConsumerWidget y recibe el courseId
+class Materias extends ConsumerWidget {
+  final int courseId;
+  const Materias({super.key, required this.courseId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // 2. Observamos el provider, pasándole el ID del curso
+    final asyncCourseContent = ref.watch(courseContentProvider(courseId));
+
+    return Scaffold(
+      appBar: AppBar(
+        // El título podría venir del provider también, pero lo dejamos simple por ahora
+        title: const Text('Contenido del Curso'),
+      ),
+      // 3. Usamos .when para manejar los estados de carga
+      body: asyncCourseContent.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err')),
+        data: (sections) {
+          // Si tenemos datos, construimos la lista de secciones y módulos
+          return ListView.builder(
+            itemCount: sections.length,
+            itemBuilder: (context, index) {
+              final section = sections[index];
+              final List modules = section['modules'] ?? [];
+              
+              // Aquí puedes construir una UI más compleja, similar a tu maqueta
+              return ExpansionTile(
+                title: Text(section['name'] ?? 'Sección sin nombre'),
+                children: modules.map((module) {
+                  return ListTile(
+                    leading: Icon(Icons.description_outlined), // Lógica de iconos
+                    title: Text(module['name'] ?? 'Módulo sin nombre'),
+                    onTap: () {
+                      // Acción al tocar un módulo (ej. abrir un recurso)
+                    },
+                  );
+                }).toList(),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*class Materias extends StatelessWidget {
   const Materias({super.key});
 
   @override
@@ -166,4 +238,4 @@ class NavegacionMaterias extends StatelessWidget {
         ),
       ));
   }
-}
+}*/

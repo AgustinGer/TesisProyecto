@@ -9,12 +9,13 @@ final appRouter = GoRouter(
   routes: [
     GoRoute(
       path: '/inicio',
-      builder: (context, state) {
+      /*builder: (context, state) {
        final params = state.extra as Map<String, dynamic>;
        final token = params['token']!;
-       final email = params['email']!;
-       return Inicio(token: token, email: email);
-      }
+       final email = params['email']!;*/
+       builder: (context, state) => const Inicio(),
+       //return Inicio(token: token, email: email);
+      
     ),
     
     GoRoute(
@@ -38,9 +39,16 @@ final appRouter = GoRouter(
       ),
 
     GoRoute(
-      path: '/materias',
-      builder: (context, state) => Materias(),
-      ),
+      // 1. La ruta ahora espera un parámetro 'courseId'
+      path: '/materias/:courseId',
+      builder: (context, state) {
+        // 2. Extraemos el ID de los parámetros de la ruta
+        final courseId = int.parse(state.pathParameters['courseId']!);
+        
+        // 3. Pasamos el ID a la pantalla de Materias
+        return Materias(courseId: courseId);
+     },
+    ),
 
     GoRoute(
       path: '/perfil',
