@@ -38,13 +38,14 @@ class BodyLogin extends StatefulWidget {
 
 class _BodyLoginState extends State<BodyLogin>{
 
-  final _usernameController= TextEditingController();
+  //final _usernameController= TextEditingController();
+  final _emailController= TextEditingController();
   final _passwordController= TextEditingController();
   bool _isloading= false;
 
   Future<void> _login() async {
       //validar si los campos en los textfield estan llenos o vacios
-     if (_usernameController.text.isEmpty || _passwordController.text.isEmpty) {
+     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Por favor, ingresa usuario y contraseña')),
       );
@@ -64,7 +65,7 @@ class _BodyLoginState extends State<BodyLogin>{
         Uri.parse(moodleUrl),
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {
-          'username': _usernameController.text,
+          'username': _emailController.text,
           'password': _passwordController.text,
           'service': service,
         },
@@ -77,8 +78,9 @@ class _BodyLoginState extends State<BodyLogin>{
 
           if (response.statusCode == 200 && responseData.containsKey('token')) {
         // LOGIN EXITOSO
-        final String token = responseData['token'];
+       // final String token = responseData['token'];
        // print('Login exitoso! Token: $token');
+
         
         // Aquí deberías guardar el token y navegar a la siguiente pantalla
         // ignore: use_build_context_synchronously
@@ -87,7 +89,10 @@ class _BodyLoginState extends State<BodyLogin>{
         );
        // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Inicio(token: token)));
         // ignore: use_build_context_synchronously
-        context.push('/inicio');
+        const String tokenDeAdmin = '4a906b67180c05b40c9f744ad0fd93a3';
+        // ignore: use_build_context_synchronously
+        context.push('/inicio', extra:{'token': tokenDeAdmin,'email': _emailController.text});
+     
       } else {
         final String errorMessage = responseData['error'] ?? 'Error desconocido';
        // print('Error de login: $errorMessage');
@@ -119,7 +124,7 @@ class _BodyLoginState extends State<BodyLogin>{
   @override
   void dispose() {
     // Limpia los controladores cuando el widget se destruye
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -161,7 +166,7 @@ class _BodyLoginState extends State<BodyLogin>{
 
             Text('Email address or usarname'),
 
-            EmailLogin(controller: _usernameController),
+            EmailLogin(controller: _emailController),
             
             SizedBox(height: 20),
 

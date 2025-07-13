@@ -9,8 +9,13 @@ final appRouter = GoRouter(
   routes: [
     GoRoute(
       path: '/inicio',
-      builder: (context, state) => Inicio(),
-      ),
+      builder: (context, state) {
+       final params = state.extra as Map<String, dynamic>;
+       final token = params['token']!;
+       final email = params['email']!;
+       return Inicio(token: token, email: email);
+      }
+    ),
     
     GoRoute(
       path: '/actividades',
