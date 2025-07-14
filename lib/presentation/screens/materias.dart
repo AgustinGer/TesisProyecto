@@ -15,7 +15,7 @@ class Materias extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // 2. Observamos el provider, pasándole el ID del curso
     final asyncCourseContent = ref.watch(courseContentProvider(courseId));
-
+    final colors= Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         // El título podría venir del provider también, pero lo dejamos simple por ahora
@@ -37,9 +37,11 @@ class Materias extends ConsumerWidget {
               return ExpansionTile(
                 title: Text(section['name'] ?? 'Sección sin nombre'),
                 children: modules.map((module) {
+                  final String moduleName = module['name'] ?? 'Módulo sin nombre';
+                  final String modname = module['modname'] ?? '';
                   return ListTile(
-                    leading: Icon(Icons.description_outlined), // Lógica de iconos
-                    title: Text(module['name'] ?? 'Módulo sin nombre'),
+                    leading: getModuleIcon(modname, colors.primary),// Lógica de iconos
+                    title: Text(moduleName),
                     onTap: () {
                       // Acción al tocar un módulo (ej. abrir un recurso)
                     },
@@ -56,7 +58,21 @@ class Materias extends ConsumerWidget {
 
 
 
-
+Widget getModuleIcon(String modname, Color primaryColor) {
+  
+  switch (modname) {
+    case 'resource':
+      return Icon(Icons.cases_rounded, color:primaryColor);
+    case 'label':
+      return Icon(Icons.info, color: Colors.green); // Cambiado a un ícono más descriptivo
+    case 'folder':
+      return const Icon(Icons.folder_copy_sharp, color: Colors.yellow); // Cambiado a un ícono de carpeta
+    case 'url':
+      return Icon(Icons.link, color: Colors.grey); // Cambiado a un ícono de enlace
+    default:
+      return const Icon(Icons.description_outlined);
+  }
+}
 
 
 

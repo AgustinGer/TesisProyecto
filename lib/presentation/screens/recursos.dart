@@ -11,7 +11,7 @@ class Recursos extends StatelessWidget {
       appBar: AppBar(
         
     //    backgroundColor: colors.primary,
-        title: Text('ACTIVIDADES'),
+        title: Text('RECURSOS'),
         centerTitle: true, 
         //centrar en ios y android
       ),
