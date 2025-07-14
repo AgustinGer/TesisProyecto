@@ -64,11 +64,23 @@ final appRouter = GoRouter(
       },
     ),
     
-    GoRoute(
+   /* GoRoute(
       path: '/videos',
       builder: (context, state) => Videos(),
-      ),
-    
+      ),*/
+    GoRoute(
+      path: '/videos',
+      builder: (context, state) {
+        // Extrae la URL del video que pasaste como 'extra'
+        final params = state.extra as Map<String, dynamic>;
+    // 2. Extrae el título y la URL del mapa.
+        final title = params['title']!;
+        final url = params['url']!;
+        // Devuelve la pantalla que mostrará el video
+        return VideoScreen(videoTitle: title, videoUrl: url);
+      },
+    ),
+
     GoRoute(
       path: '/theme',
       name: ThemeChange.name,

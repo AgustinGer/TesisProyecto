@@ -17,18 +17,31 @@ class RecursosScreen extends ConsumerWidget {
   const RecursosScreen({super.key, required this.files});
 
   // Función para obtener un ícono según el tipo de archivo
-  Icon _getFileIcon(String mimetype) {
-    if (mimetype.contains('pdf')) {
-      return const Icon(Icons.picture_as_pdf, color: Colors.red);
-    }
-    if (mimetype.contains('word')) {
-      return const Icon(Icons.description, color: Colors.blue);
-    }
-    if (mimetype.contains('spreadsheet') || mimetype.contains('excel')) {
-      return const Icon(Icons.analytics, color: Colors.green);
-    }
-    return const Icon(Icons.attach_file);
+Icon _getFileIcon(String mimetype) {
+  // Nuevo: para cualquier tipo de imagen (jpg, png, gif, etc.)
+  if (mimetype.contains('image')) {
+    return const Icon(Icons.image, color: Colors.purple);
   }
+  
+  // Para archivos PDF
+  if (mimetype.contains('pdf')) {
+    return const Icon(Icons.picture_as_pdf, color: Colors.red);
+  }
+
+  // Para archivos de Word
+  if (mimetype.contains('word')) {
+    return const Icon(Icons.description, color: Colors.blue);
+  }
+  
+  // Para archivos de Excel
+  if (mimetype.contains('spreadsheet') || mimetype.contains('excel') || mimetype.contains('csv')) {
+    return const Icon(Icons.grid_on_rounded, color: Colors.green); // Ícono más representativo
+  }
+  
+  // Ícono por defecto para cualquier otro tipo de archivo
+  return const Icon(Icons.attach_file);
+}
+
 
 Future<void> _downloadFile(WidgetRef ref, String fileUrl) async {
   final token = ref.read(authTokenProvider);

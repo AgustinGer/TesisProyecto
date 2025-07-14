@@ -44,18 +44,61 @@ class Materias extends ConsumerWidget {
                     leading: getModuleIcon(modname, colors.primary),// Lógica de iconos
                     title: Text(moduleName),
                     onTap: () {
-                      // Verificamos si el módulo tiene contenidos (archivos)
-                      final List contents = module['contents'] ?? [];
-                      if (contents.isNotEmpty) {
-                        // Si tiene, navegamos a la pantalla de recursos y le pasamos la lista
-                        context.push('/recursos', extra: contents);
-                      } else {
-                        // Opcional: mostrar un mensaje si no hay archivos
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Este módulo no tiene archivos para descargar.')),
-                        );
+                      // Obtenemos el tipo de módulo, por ejemplo: 'folder', 'url', 'label', 'resource'.
+                      final String modname = module['modname'] ?? '';
+
+                      // Usamos un switch para decidir qué hacer según el tipo de módulo.
+                      switch (modname) {
+                        
+                        // Caso 1: Es una carpeta con archivos.
+                        case 'folder':
+                        case 'resource': // Un recurso también es un archivo descargable.
+                          final List contents = module['contents'] ?? [];
+                          if (contents.isNotEmpty) {
+                            // Navegamos a la pantalla de recursos y pasamos la lista de archivos.
+                            context.push('/recursos', extra: contents);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Este módulo no tiene contenido.')),
+                            );
+                          }
+                          break;
+
+                        // Caso 2: Es un enlace (URL), como un video.
+                        case 'url':
+                          final List contents = module['contents'] ?? [];
+                          if (contents.isNotEmpty) {
+                            // Obtenemos la URL externa del primer archivo.
+                            final String videoUrl = contents[0]['fileurl'] ?? '';
+                            if (videoUrl.isNotEmpty) {
+                              // Aquí puedes navegar a una pantalla de video o lanzarla directamente.
+                              // Por ahora, la lanzaremos con url_launcher.
+                              // Asegúrate de tener la lógica para añadir el token.
+                              // _downloadFile(ref, videoUrl); // Reutilizando la función de descarga
+                              print('Navegar a video: $videoUrl');
+                              context.push('/videos', extra: {'title': module['name'], 'url': videoUrl});
+                            }
+                          }
+                         break;
+
+                        // Caso 3: Es una etiqueta de texto o una página (para la introducción).
+                        case 'label':
+                        case 'page':
+                          final String description = module['description'] ?? 'No hay descripción.';
+                          // Navegamos a una nueva pantalla de descripción y le pasamos el texto.
+                          print('Navegar a descripción: $description');
+                          // context.push('/descripcion', extra: description);
+                          break;
+                        
+                        // Caso por defecto: para cualquier otro tipo de módulo.
+                        default:
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Este tipo de contenido no es soportado aún.')),
+                          );
+                          break;
                       }
                     },
+
                   );
                 }).toList(),
               );
@@ -73,7 +116,7 @@ Widget getModuleIcon(String modname, Color primaryColor) {
   
   switch (modname) {
     case 'resource':
-      return Icon(Icons.cases_rounded, color:primaryColor);
+      return Icon(Icons.archive_sharp, color:primaryColor);
     case 'label':
       return Icon(Icons.info, color: Colors.green); // Cambiado a un ícono más descriptivo
     case 'folder':
