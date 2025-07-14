@@ -57,9 +57,13 @@ final appRouter = GoRouter(
 
     GoRoute(
       path: '/recursos',
-      builder: (context, state) => Recursos(),
-      ),
-
+      builder: (context, state) {
+        // Extrae la lista de archivos que pasamos como 'extra'
+        final files = state.extra as List<dynamic>;
+        return RecursosScreen(files: files);
+      },
+    ),
+    
     GoRoute(
       path: '/videos',
       builder: (context, state) => Videos(),

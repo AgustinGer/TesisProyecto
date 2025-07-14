@@ -1,6 +1,110 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_tesis/listas/pruebas/listas_pruebas.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+//import 'package:flutter_tesis/listas/pruebas/listas_pruebas.dart';
+import 'package:flutter_tesis/provider/auth_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+
+
+
+
+
+
+// Es un ConsumerWidget para poder leer el token del provider
+class RecursosScreen extends ConsumerWidget {
+  final List<dynamic> files;
+
+  const RecursosScreen({super.key, required this.files});
+
+  // Función para obtener un ícono según el tipo de archivo
+  Icon _getFileIcon(String mimetype) {
+    if (mimetype.contains('pdf')) {
+      return const Icon(Icons.picture_as_pdf, color: Colors.red);
+    }
+    if (mimetype.contains('word')) {
+      return const Icon(Icons.description, color: Colors.blue);
+    }
+    if (mimetype.contains('spreadsheet') || mimetype.contains('excel')) {
+      return const Icon(Icons.analytics, color: Colors.green);
+    }
+    return const Icon(Icons.attach_file);
+  }
+
+Future<void> _downloadFile(WidgetRef ref, String fileUrl) async {
+  final token = ref.read(authTokenProvider);
+  if (token == null) return;
+
+  // --- LÓGICA CORREGIDA PARA CONSTRUIR LA URL ---
+  String urlWithToken;
+  if (fileUrl.contains('?')) {
+    // Si ya tiene parámetros, añadimos el token con &
+    urlWithToken = '$fileUrl&token=$token';
+  } else {
+    // Si no tiene parámetros, añadimos el token con ?
+    urlWithToken = '$fileUrl?token=$token';
+  }
+  // ------------------------------------------------
+
+  print('--- Intentando abrir URL CORREGIDA: $urlWithToken ---');
+
+  final uri = Uri.parse(urlWithToken);
+  
+  if (await canLaunchUrl(uri)) {
+    // Usamos el modo externo para que el navegador del sistema maneje la descarga
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } else {
+    print('No se pudo lanzar la URL: $uri');
+  }
+}
+  // Función para iniciar la descarga
+ /* Future<void> _downloadFile(WidgetRef ref, String fileUrl) async {
+    final token = ref.read(authTokenProvider); // Lee el token
+    if (token == null) return;
+
+    // AÑADIMOS EL TOKEN A LA URL PARA TENER PERMISO DE DESCARGA
+    final urlWithToken = '$fileUrl?token=$token';
+     print('--- Intentando abrir esta URL: $urlWithToken ---');
+    final uri = Uri.parse(urlWithToken);
+    
+    // Usamos url_launcher para abrir el enlace en un navegador externo
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      // Manejar el error si no se puede abrir la URL
+      print('No se pudo lanzar la URL: $uri');
+    }
+  }*/
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Recursos'),
+      ),
+      body: ListView.builder(
+        itemCount: files.length,
+        itemBuilder: (context, index) {
+          final file = files[index];
+          final String filename = file['filename'] ?? 'Archivo sin nombre';
+          final String fileUrl = file['fileurl'] ?? '';
+          final String mimetype = file['mimetype'] ?? '';
+
+          return ListTile(
+            leading: _getFileIcon(mimetype),
+            title: Text(filename),
+            onTap: () {
+              if (fileUrl.isNotEmpty) {
+                _downloadFile(ref, fileUrl);
+              }
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+/*
 class Recursos extends StatelessWidget {
   const Recursos({super.key});
 
@@ -70,4 +174,4 @@ class Recursos extends StatelessWidget {
       )),
     );
   }
-}
+}*/

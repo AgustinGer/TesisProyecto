@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 //import 'package:flutter_tesis/listas/pruebas/listas_pruebas.dart';
 import 'package:flutter_tesis/provider/course_content_provider.dart';
+import 'package:go_router/go_router.dart';
 //import 'package:go_router/go_router.dart';
 
 // archivo: materias.dart
@@ -43,7 +44,17 @@ class Materias extends ConsumerWidget {
                     leading: getModuleIcon(modname, colors.primary),// Lógica de iconos
                     title: Text(moduleName),
                     onTap: () {
-                      // Acción al tocar un módulo (ej. abrir un recurso)
+                      // Verificamos si el módulo tiene contenidos (archivos)
+                      final List contents = module['contents'] ?? [];
+                      if (contents.isNotEmpty) {
+                        // Si tiene, navegamos a la pantalla de recursos y le pasamos la lista
+                        context.push('/recursos', extra: contents);
+                      } else {
+                        // Opcional: mostrar un mensaje si no hay archivos
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Este módulo no tiene archivos para descargar.')),
+                        );
+                      }
                     },
                   );
                 }).toList(),
