@@ -1,5 +1,6 @@
 //import 'package:flutter/cupertino.dart';
 import 'package:flutter_tesis/presentation/screens.dart';
+import 'package:flutter_tesis/presentation/screens/description.dart';
 import 'package:go_router/go_router.dart';
 
 
@@ -86,5 +87,13 @@ final appRouter = GoRouter(
       name: ThemeChange.name,
       builder: (context, state) => ThemeChange(),
       ),
+
+    GoRoute(
+      path: '/description',
+      builder: (context, state) {
+        final description = state.extra as String;
+        return DescriptionScreen(description: description);
+      },
+    ),
   ],  
 );

@@ -87,9 +87,14 @@ class Materias extends ConsumerWidget {
                           final String description = module['description'] ?? 'No hay descripción.';
                           // Navegamos a una nueva pantalla de descripción y le pasamos el texto.
                           print('Navegar a descripción: $description');
-                          // context.push('/descripcion', extra: description);
+                          context.push('/description', extra: description);
                           break;
                         
+                        case 'forum':
+                        // El ID del foro se encuentra en la clave 'instance' del módulo
+                        final int forumId = module['instance'];
+                        context.push('/foro/$forumId');
+                        break;
                         // Caso por defecto: para cualquier otro tipo de módulo.
                         default:
                           ScaffoldMessenger.of(context).showSnackBar(
