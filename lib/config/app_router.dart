@@ -1,6 +1,8 @@
 //import 'package:flutter/cupertino.dart';
 import 'package:flutter_tesis/presentation/screens.dart';
 import 'package:flutter_tesis/presentation/screens/description.dart';
+import 'package:flutter_tesis/presentation/screens/discusion.dart';
+import 'package:flutter_tesis/presentation/screens/foro.dart';
 import 'package:go_router/go_router.dart';
 
 
@@ -95,5 +97,25 @@ final appRouter = GoRouter(
         return DescriptionScreen(description: description);
       },
     ),
+    
+    GoRoute(
+    path: '/foro/:forumId',
+    builder: (context, state) {
+    final forumId = int.parse(state.pathParameters['forumId']!);
+    return ForumScreen(forumId: forumId);
+      },
+    ),
+
+    // En tu app_router.dart
+    GoRoute(
+      // La ruta espera el ID de la discusión
+      path: '/foro/discusion/:discussionId',
+    //  path: '/discusion/:discussionId',
+      builder: (context, state) {
+        final discussionId = int.parse(state.pathParameters['discussionId']!);
+        return DiscussionDetailScreen(discussionId: discussionId);
+      },
+    ),
+
   ],  
 );
