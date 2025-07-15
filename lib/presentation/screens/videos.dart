@@ -43,7 +43,7 @@ class VideoScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         // 3. Mostramos el título del video en la barra superior.
-        title: Text(videoTitle),
+        title: Text('Enlace del Video'),
         centerTitle: true,
       ),
       body: Padding(
@@ -52,19 +52,41 @@ class VideoScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Sección para mostrar la URL
-            const Text(
-              'Enlace del Video:',
+            Text(
+              videoTitle,
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            SelectableText(
+           
+            Row(
+              children: [
+                // El Expanded permite que el texto ocupe todo el espacio disponible
+                Flexible(
+                  child: SelectableText(
+                    videoUrl,
+                    style: const TextStyle(fontSize: 16, color: Colors.blue),
+                  ),
+                ),
+                // El botón de icono al final de la fila
+                IconButton(
+                  iconSize: 42,
+                  padding: EdgeInsets.zero,
+                  icon: const Icon(Icons.play_circle_outline),
+                  tooltip: 'Abrir video',
+                  onPressed: () => _launchVideoUrl(ref),
+                ),
+              ],
+            ),
+
+            Divider()
+           /* SelectableText(
               videoUrl,
               style: const TextStyle(fontSize: 16, color: Colors.blue),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 30),*/
             
             // Botón para abrir el video
-            Center(
+            /*Center(
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.play_circle_fill),
                 label: const Text('Abrir Video'),
@@ -74,7 +96,7 @@ class VideoScreen extends ConsumerWidget {
                   textStyle: const TextStyle(fontSize: 18),
                 ),
               ),
-            ),
+            ),*/
           ],
         ),
       ),

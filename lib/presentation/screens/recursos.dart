@@ -94,7 +94,8 @@ Future<void> _downloadFile(WidgetRef ref, String fileUrl) async {
       appBar: AppBar(
         title: const Text('Recursos'),
       ),
-      body: ListView.builder(
+      body: ListView.separated(
+        
         itemCount: files.length,
         itemBuilder: (context, index) {
           final file = files[index];
@@ -109,11 +110,18 @@ Future<void> _downloadFile(WidgetRef ref, String fileUrl) async {
               if (fileUrl.isNotEmpty) {
                 _downloadFile(ref, fileUrl);
               }
-            },
+            },         
+          );        
+        }, 
+        separatorBuilder: (context,index){
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+            child: Divider(),
           );
-        },
+       },   
       ),
     );
+    
   }
 }
 
