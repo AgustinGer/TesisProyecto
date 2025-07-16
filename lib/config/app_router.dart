@@ -21,11 +21,15 @@ final appRouter = GoRouter(
       
     ),
     
+// En tu archivo app_router.dart
     GoRoute(
-      path: '/actividades',
-      builder: (context, state) => Actividades(),
-      ),
-
+      path: '/actividades/:assignmentId',
+      builder: (context, state) {
+        final assignmentId = int.parse(state.pathParameters['assignmentId']!);
+        return ActividadesScreen(assignmentId: assignmentId);
+      },
+    ),
+    
     GoRoute(
       path: '/calendario',
       builder: (context, state) => Calendario(),

@@ -120,6 +120,8 @@ class Materias extends ConsumerWidget {
 Widget getModuleIcon(String modname, Color primaryColor) {
   
   switch (modname) {
+     case 'assign': // <-- Añade este caso para las tareas
+      return Icon(Icons.assignment_turned_in_outlined, color: Colors.orange.shade700);
     case 'resource':
       return Icon(Icons.archive_sharp, color:primaryColor);
     case 'label':
