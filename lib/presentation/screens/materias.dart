@@ -80,7 +80,13 @@ class Materias extends ConsumerWidget {
                             }
                           }
                          break;
-
+                         
+                                                // Dentro del switch (modname) en el onTap
+                        case 'assign':
+                          // El ID de la tarea se encuentra en la clave 'instance' del módulo
+                          final int assignmentId = module['instance'];
+                          context.push('/actividades/$courseId/$assignmentId');
+                        break;
                         // Caso 3: Es una etiqueta de texto o una página (para la introducción).
                         case 'label':
                         case 'page':

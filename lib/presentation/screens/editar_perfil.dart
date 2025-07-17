@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tesis/provider/auth_provider.dart';
 import 'package:flutter_tesis/provider/user_profile.dart';
-import 'package:image_picker/image_picker.dart';
+//import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 
 // Importa tus providers
@@ -29,7 +29,7 @@ class _EditarPerfilState extends ConsumerState<EditarPerfil> {
   bool _isLoading = false;
 
   // Función para seleccionar una imagen de la galería
-  Future<void> _pickImage() async {
+  /*Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
@@ -38,7 +38,7 @@ class _EditarPerfilState extends ConsumerState<EditarPerfil> {
         _pickedImage = File(pickedFile.path);
       });
     }
-  }
+  }*/
 
   // Función para guardar los cambios en Moodle
   // En tu archivo editar_perfil.dart
