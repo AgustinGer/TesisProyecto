@@ -63,7 +63,9 @@ class _EventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String courseName = event['course']['fullname'] ?? 'General';
-    final String eventName = event['name'] ?? 'Evento sin nombre';
+    //final String eventName = event['name'] ?? 'Evento sin nombre';
+    final String eventName = (event['name'] as String? ?? 'Evento sin nombre')
+    .replaceAll(' está en fecha de entrega', '');
     final int eventDate = event['timestart'] ?? 0;
 
     return Card(
