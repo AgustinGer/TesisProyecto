@@ -19,22 +19,18 @@ class Materias extends ConsumerWidget {
     final colors= Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        // El título podría venir del provider también, pero lo dejamos simple por ahora
         title: const Text('Contenido del Curso'),
       ),
       // 3. Usamos .when para manejar los estados de carga
       body: asyncCourseContent.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
-        data: (sections) {
-          // Si tenemos datos, construimos la lista de secciones y módulos
+        data: (sections) {  
           return ListView.builder(
             itemCount: sections.length,
             itemBuilder: (context, index) {
               final section = sections[index];
               final List modules = section['modules'] ?? [];
-              
-              // Aquí puedes construir una UI más compleja, similar a tu maqueta
               return ExpansionTile(
                 title: Text(section['name'] ?? 'Sección sin nombre'),
                 children: modules.map((module) {
@@ -48,14 +44,12 @@ class Materias extends ConsumerWidget {
                       final String modname = module['modname'] ?? '';
 
                       // Usamos un switch para decidir qué hacer según el tipo de módulo.
-                      switch (modname) {
-                        
+                      switch (modname) {                   
                         // Caso 1: Es una carpeta con archivos.
                         case 'folder':
-                        case 'resource': // Un recurso también es un archivo descargable.
+                        case 'resource':
                           final List contents = module['contents'] ?? [];
                           if (contents.isNotEmpty) {
-                            // Navegamos a la pantalla de recursos y pasamos la lista de archivos.
                             context.push('/recursos', extra: contents);
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(

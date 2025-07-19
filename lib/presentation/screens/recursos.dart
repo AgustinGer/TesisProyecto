@@ -94,15 +94,13 @@ Future<void> _downloadFile(WidgetRef ref, String fileUrl) async {
       appBar: AppBar(
         title: const Text('Recursos'),
       ),
-      body: ListView.separated(
-        
+      body: ListView.separated(       
         itemCount: files.length,
         itemBuilder: (context, index) {
           final file = files[index];
           final String filename = file['filename'] ?? 'Archivo sin nombre';
           final String fileUrl = file['fileurl'] ?? '';
           final String mimetype = file['mimetype'] ?? '';
-
           return ListTile(
             leading: _getFileIcon(mimetype),
             title: Text(filename),

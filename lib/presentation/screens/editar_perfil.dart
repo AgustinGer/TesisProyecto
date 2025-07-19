@@ -57,7 +57,6 @@ Future<void> _saveProfile() async {
   const String apiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php';
 
   try {
-    // --- PASO 1: Actualizar los datos de texto (esto ya funciona bien) ---
     await http.post(
       Uri.parse(apiUrl),
       body: {

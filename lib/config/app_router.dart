@@ -48,13 +48,9 @@ final appRouter = GoRouter(
       ),
 
     GoRoute(
-      // 1. La ruta ahora espera un parámetro 'courseId'
       path: '/materias/:courseId',
       builder: (context, state) {
-        // 2. Extraemos el ID de los parámetros de la ruta
         final courseId = int.parse(state.pathParameters['courseId']!);
-        
-        // 3. Pasamos el ID a la pantalla de Materias
         return Materias(courseId: courseId);
      },
     ),

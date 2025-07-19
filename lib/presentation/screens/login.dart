@@ -51,12 +51,11 @@ class _BodyLoginState extends ConsumerState<BodyLogin> {
 
     setState(() { _isLoading = true; });
 
-    // URLs y constantes que necesitaremos
-    const String loginUrl = 'http://192.168.1.45/tesismovil/login/token.php'; // Usa tu IP real
+
+    const String loginUrl = 'http://192.168.1.45/tesismovil/login/token.php';
     const String apiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php';
     const String service = 'my_Api';
-    const String adminToken = 'b4b9b8e276e7d4d5dbe3265db5dc8478'; // Tu token de admin
-
+    const String adminToken = '3a3559654e6130b6c670c7eb1444a574'; 
     try {
       // --- PASO 1: Validar las credenciales del usuario ---
       final loginResponse = await http.post(
@@ -72,13 +71,14 @@ class _BodyLoginState extends ConsumerState<BodyLogin> {
 
       // Si las credenciales son válidas, Moodle devuelve un token.
       if (loginResponse.statusCode == 200 && loginData.containsKey('token')) {
-        
+        final userToken = loginData['token'];
         // --- PASO 2: Obtener el ID del usuario que inició sesión ---
         // Usamos el token de ADMIN para esta llamada, como decidimos.
         final userResponse = await http.post(
           Uri.parse(apiUrl),
           body: {
-            'wstoken': adminToken,
+            'wstoken': userToken,
+           // 'wstoken': adminToken,
             'wsfunction': 'core_user_get_users_by_field',
             'moodlewsrestformat': 'json',
             'field': 'email',
@@ -90,7 +90,8 @@ class _BodyLoginState extends ConsumerState<BodyLogin> {
         final int userId = userData[0]['id'];
 
         // --- PASO 3: Guardar el token de ADMIN y el ID del USUARIO en Riverpod ---
-        ref.read(authTokenProvider.notifier).state = adminToken;
+       // ref.read(authTokenProvider.notifier).state = adminToken;
+       ref.read(authTokenProvider.notifier).state = userToken;
         ref.read(userIdProvider.notifier).state = userId;
 
         // --- PASO 4: Navegar a la pantalla de inicio ---

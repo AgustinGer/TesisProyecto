@@ -1,28 +1,50 @@
-import 'dart:io';
-import 'package:file_picker/file_picker.dart';
+//import 'package.flutter/material.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_tesis/provider/activity_provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
+//import 'package.intl/intl.dart';
+//import 'package:flutter_tesis/providers/assignment_provider.dart';
+
+
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-//import 'package:flutter_tesis/provider/assignment_provider.dart';
+
+// Asegúrate de que las rutas a tus providers sean correctas
+//import 'package:flutter_tesis/providers/assignment_provider.dart';
 import 'package:flutter_tesis/provider/auth_provider.dart';
 
-class ActividadesScreen extends ConsumerStatefulWidget { 
-  final int courseId;// Cambiado a ConsumerStatefulWidget
+class ActividadesScreen extends ConsumerStatefulWidget {
+  final int courseId;
   final int assignmentId;
- const ActividadesScreen({super.key, required this.courseId, required this.assignmentId});
+  const ActividadesScreen({super.key, required this.courseId, required this.assignmentId});
 
   @override
   ConsumerState<ActividadesScreen> createState() => _ActividadesScreenState();
 }
 
 class _ActividadesScreenState extends ConsumerState<ActividadesScreen> {
-  File? _pickedFile; // Para guardar el archivo seleccionado
-  bool _isUploading = false; // Para mostrar el spinner de carga
+  late final Map<String, int> _detailsProviderParams;
+  
+  // --- NUEVAS VARIABLES DE ESTADO ---
+  File? _pickedFile;
+  bool _isUploading = false;
+  // ------------------------------------
+
+  @override
+  void initState() {
+    super.initState();
+    _detailsProviderParams = {
+      'courseId': widget.courseId,
+      'assignmentId': widget.assignmentId,
+    };
+  }
+
+  // --- NUEVAS FUNCIONES PARA LA ENTREGA ---
 
   // Función para que el usuario seleccione un archivo
   Future<void> _pickFile() async {
@@ -44,28 +66,53 @@ class _ActividadesScreenState extends ConsumerState<ActividadesScreen> {
     const apiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php';
 
     try {
-      // --- PASO 1: Subir el archivo al área de borradores ---
+      // PASO 1: Subir el archivo al área de borradores
       final uploadUrl = '$apiUrl?wsfunction=core_files_upload&wstoken=$token&moodlewsrestformat=json';
-      var uploadRequest = http.MultipartRequest('POST', Uri.parse(uploadUrl))
+     /* var uploadRequest = http.MultipartRequest('POST', Uri.parse(uploadUrl))
         ..fields.addAll({
-          'component': 'assignsubmission_file', // Componente específico para entregas de tareas
+          'component': 'assignsubmission_file',
           'filearea': 'submission_files',
-          'itemid': '0', // Se usa 0 para crear un nuevo borrador
+          'itemid': '0',
           'filepath': '/',
           'filename': _pickedFile!.path.split('/').last,
         })
         ..files.add(await http.MultipartFile.fromPath('file_0', _pickedFile!.path));
+*/
 
-      final uploadResponse = await uploadRequest.send();
-      final uploadResponseBody = await uploadResponse.stream.bytesToString();
+    // --- VERIFICACIÓN DE PARÁMETROS ---
+    print('--- INICIANDO SUBIDA DE TAREA ---');
+    print('URL de subida: $uploadUrl');
+    
+    final fields = {
+      'component': 'assignsubmission_file',
+      'filearea': 'submission_files',
+      'itemid': '0',
+      'filepath': '/',
+      'filename': _pickedFile!.path.split('/').last,
+    };
+    print('Campos (Fields): $fields');
 
-      if (uploadResponse.statusCode != 200) throw Exception('Error al subir el archivo: $uploadResponseBody');
+    const fileField = 'file_0';
+    final filePath = _pickedFile!.path;
+    print('Campo del archivo: $fileField');
+    print('Ruta del archivo: $filePath');
+    print('------------------------------------');
+    // ------------------------------------
+
+    var uploadRequest = http.MultipartRequest('POST', Uri.parse(uploadUrl))
+      ..fields.addAll(fields)
+      ..files.add(await http.MultipartFile.fromPath(fileField, filePath));
+
+      final uploadStreamedResponse = await uploadRequest.send();
+      final uploadResponseBody = await uploadStreamedResponse.stream.bytesToString();
+      
+      if (uploadStreamedResponse.statusCode != 200) throw Exception('Error al subir el archivo: $uploadResponseBody');
       
       final uploadData = json.decode(uploadResponseBody);
       if (uploadData is List && uploadData.isNotEmpty && uploadData[0].containsKey('itemid')) {
         final int draftItemId = uploadData[0]['itemid'];
 
-        // --- PASO 2: Guardar la entrega asociando el archivo subido ---
+        // PASO 2: Guardar la entrega asociando el archivo subido
         final saveResponse = await http.post(
           Uri.parse(apiUrl),
           body: {
@@ -79,32 +126,32 @@ class _ActividadesScreenState extends ConsumerState<ActividadesScreen> {
 
         if (saveResponse.statusCode != 200) throw Exception('Error al guardar la entrega');
 
-        // Si todo va bien, invalida el provider para refrescar la pantalla
-        ref.invalidate(assignmentProvider({
-          'courseId': widget.courseId,
-          'assignmentId': widget.assignmentId
-        }));
-        if(mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-             const SnackBar(content: Text('¡Tarea entregada con éxito!'), backgroundColor: Colors.green)
-           );
+        // Si todo va bien, refresca los datos de la pantalla
+        ref.invalidate(assignmentDetailsProvider(_detailsProviderParams));
+        ref.invalidate(submissionStatusProvider(widget.assignmentId));
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('¡Tarea entregada con éxito!'), backgroundColor: Colors.green)
+          );
         }
 
       } else {
-        throw Exception('La respuesta de la subida del archivo no es válida: $uploadResponseBody');
+        final errorMsg = uploadData is Map ? uploadData['message'] : 'Respuesta de subida inválida.';
+        throw Exception(errorMsg);
       }
 
     } catch (e) {
-      if(mounted) {
-         ScaffoldMessenger.of(context).showSnackBar(
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red)
-         );
+        );
       }
     } finally {
-      if(mounted) setState(() { _isUploading = false; });
+      if (mounted) setState(() { _isUploading = false; });
     }
   }
-
+  // -----------------------------------------
 
   String _formatTimestamp(int timestamp) {
     if (timestamp == 0) return 'No definida';
@@ -115,23 +162,21 @@ class _ActividadesScreenState extends ConsumerState<ActividadesScreen> {
 
   @override
   Widget build(BuildContext context) {
-      final asyncAssignment = ref.watch(assignmentProvider({
-        'courseId': widget.courseId,
-        'assignmentId': widget.assignmentId
-      }));
-
+    final asyncDetails = ref.watch(assignmentDetailsProvider(_detailsProviderParams));
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text("Detalle de la Tarea"),
       ),
-      body: asyncAssignment.when(
+      body: asyncDetails.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
-        data: (data) {
-           final String title = data['name'];
-          final String intro = data['intro'];
-          final int dueDate = data['duedate'];
-          final String status = data['status'];
+        error: (err, stack) => Center(child: Text('Error al cargar detalles: $err')),
+        data: (details) {
+          final asyncStatus = ref.watch(submissionStatusProvider(widget.assignmentId));
+          
+          final String title = details['name'] ?? 'Tarea sin título';
+          final String intro = details['intro'] ?? '<p>Sin descripción.</p>';
+          final int dueDate = details['duedate'] ?? 0;
           
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
@@ -146,15 +191,23 @@ class _ActividadesScreenState extends ConsumerState<ActividadesScreen> {
                 const Text('Fecha de entrega:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 Text(_formatTimestamp(dueDate)),
                 const SizedBox(height: 20),
+                
                 const Text('Estado de la entrega:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                Chip(
-                  label: Text(status == 'submitted' ? 'Entregado' : 'No entregado'),
-                  backgroundColor: status == 'submitted' ? Colors.green.shade100 : Colors.orange.shade100,
+                asyncStatus.when(
+                  loading: () => const Text('Cargando estado...'),
+                  error: (err, stack) => Text('Error: $err'),
+                  data: (statusData) {
+                    final status = statusData['lastattempt']?['submission']?['status'] ?? 'No entregado';
+                    return Chip(
+                      label: Text(status == 'submitted' ? 'Entregado' : 'No entregado'),
+                      backgroundColor: status == 'submitted' ? Colors.green.shade100 : Colors.orange.shade100,
+                    );
+                  }
                 ),
                 
-                const Divider(height: 30),
+                /*const Divider(height: 30),
 
-                // --- NUEVA SECCIÓN DE ENTREGA ---
+                // --- NUEVA SECCIÓN DE UI PARA LA ENTREGA ---
                 const Text('Entrega', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                 const SizedBox(height: 12),
                 
@@ -197,13 +250,13 @@ class _ActividadesScreenState extends ConsumerState<ActividadesScreen> {
                     child: ElevatedButton.icon(
                       icon: const Icon(Icons.file_upload),
                       label: const Text('Realizar entrega'),
-                      // El botón se deshabilita si no hay archivo seleccionado
                       onPressed: _pickedFile == null ? null : _submitAssignment,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15)
                       ),
                     ),
-                  )
+                  )*/
+                // ------------------------------------------
               ],
             ),
           );
@@ -212,6 +265,128 @@ class _ActividadesScreenState extends ConsumerState<ActividadesScreen> {
     );
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// 1. Cambiamos a ConsumerStatefulWidget
+/*class ActividadesScreen extends ConsumerStatefulWidget {
+  final int courseId;
+  final int assignmentId;
+  const ActividadesScreen({super.key, required this.courseId, required this.assignmentId});
+
+  @override
+  ConsumerState<ActividadesScreen> createState() => _ActividadesScreenState();
+}
+
+class _ActividadesScreenState extends ConsumerState<ActividadesScreen> {
+  // 2. Declaramos la variable para los parámetros
+  late final Map<String, int> _detailsProviderParams;
+
+  @override
+  void initState() {
+    super.initState();
+    // 3. Asignamos el valor una SOLA VEZ cuando la pantalla se crea
+    _detailsProviderParams = {
+      'courseId': widget.courseId,
+      'assignmentId': widget.assignmentId,
+    };
+  }
+
+  String _formatTimestamp(int timestamp) {
+    if (timestamp == 0) return 'No definida';
+    initializeDateFormatting('es');
+    final date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+    return DateFormat.yMMMMEEEEd('es').add_jm().format(date);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // 4. Usamos la variable en lugar de crear un mapa nuevo
+    final asyncDetails = ref.watch(assignmentDetailsProvider(_detailsProviderParams));
+    
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Detalle de la Tarea"),
+      ),
+      body: asyncDetails.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error al cargar detalles: $err')),
+        data: (details) {
+          final asyncStatus = ref.watch(submissionStatusProvider(widget.assignmentId));
+          
+          final String title = details['name'] ?? 'Tarea sin título';
+          final String intro = details['intro'] ?? '<p>Sin descripción.</p>';
+          final int dueDate = details['duedate'] ?? 0;
+          
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                const Divider(height: 24),
+                const Text('Instrucciones:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Html(data: intro),
+                const SizedBox(height: 20),
+                const Text('Fecha de entrega:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(_formatTimestamp(dueDate)),
+                const SizedBox(height: 20),
+                
+                const Text('Estado de la entrega:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                asyncStatus.when(
+                  loading: () => const Text('Cargando estado...'),
+                  error: (err, stack) => Text('Error: $err'),
+                  data: (statusData) {
+                    final status = statusData['lastattempt']?['submission']?['status'] ?? 'No entregado';
+                    return Chip(
+                      label: Text(status == 'submitted' ? 'Entregado' : 'No entregado'),
+                      backgroundColor: status == 'submitted' ? Colors.green.shade100 : Colors.orange.shade100,
+                    );
+                  }
+                ),
+                
+                const Divider(height: 30),
+                // Aquí iría tu UI para la entrega de archivos
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+*/
+
+
+
+
+
+
+
+
+
+///doss
 
 /*class Actividades extends StatelessWidget {
   const Actividades({super.key});
