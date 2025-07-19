@@ -55,7 +55,7 @@ class _BodyLoginState extends ConsumerState<BodyLogin> {
     const String loginUrl = 'http://192.168.1.45/tesismovil/login/token.php';
     const String apiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php';
     const String service = 'my_Api';
-    const String adminToken = '3a3559654e6130b6c670c7eb1444a574'; 
+    //const String adminToken = '3a3559654e6130b6c670c7eb1444a574'; 
     try {
       // --- PASO 1: Validar las credenciales del usuario ---
       final loginResponse = await http.post(

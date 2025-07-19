@@ -24,11 +24,13 @@ final appRouter = GoRouter(
 // En tu archivo app_router.dart
       GoRoute(
         path: '/actividades/:courseId/:assignmentId',
+     //   path: '/actividades/:assignmentId',
         builder: (context, state) {
           final courseId = int.parse(state.pathParameters['courseId']!);
           final assignmentId = int.parse(state.pathParameters['assignmentId']!);
           // Pasamos ambos IDs a la pantalla de Actividades
           return ActividadesScreen(courseId: courseId, assignmentId: assignmentId);
+       //   return ActividadesScreen(assignmentId: assignmentId);
         },
       ),
 

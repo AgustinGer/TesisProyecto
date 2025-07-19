@@ -11,10 +11,25 @@ const String moodleApiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/serv
 final assignmentDetailsProvider = FutureProvider.family<Map<String, dynamic>, Map<String, int>>((ref, ids) async {
   print('--- VERIFICADOR: assignmentDetailsProvider INICIADO ---');
   final token = ref.watch(authTokenProvider);
-  final courseId = ids['courseId']!;
+  //final courseId = ids['courseId']!;
+  int? courseId = ids['courseId'];
   final assignmentId = ids['assignmentId']!;
 
   if (token == null) throw Exception('No autenticado');
+
+   if (courseId == null) {
+    final moduleResponse = await http.post(
+      Uri.parse(moodleApiUrl),
+      body: {
+        'wstoken': token,
+        'wsfunction': 'core_course_get_course_module',
+        'moodlewsrestformat': 'json',
+        'cmid': assignmentId.toString(), // cmid es el ID de la tarea que sí tenemos
+      },
+    );
+    final moduleData = json.decode(moduleResponse.body);
+    courseId = moduleData['cm']['course'];
+  }
 
   final response = await http.post(
     Uri.parse(moodleApiUrl),

@@ -21,7 +21,8 @@ import 'package:flutter_tesis/provider/auth_provider.dart';
 class ActividadesScreen extends ConsumerStatefulWidget {
   final int courseId;
   final int assignmentId;
-  const ActividadesScreen({super.key, required this.courseId, required this.assignmentId});
+  //const ActividadesScreen({super.key, required this.courseId, required this.assignmentId});
+const ActividadesScreen({super.key, required this.courseId, required this.assignmentId});
 
   @override
   ConsumerState<ActividadesScreen> createState() => _ActividadesScreenState();
@@ -162,8 +163,8 @@ class _ActividadesScreenState extends ConsumerState<ActividadesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final asyncDetails = ref.watch(assignmentDetailsProvider(_detailsProviderParams));
-    
+   final asyncDetails = ref.watch(assignmentDetailsProvider(_detailsProviderParams));
+   // final asyncDetails = ref.watch(assignmentDetailsProvider({'assignmentId': widget.assignmentId}));
     return Scaffold(
       appBar: AppBar(
         title: const Text("Detalle de la Tarea"),
