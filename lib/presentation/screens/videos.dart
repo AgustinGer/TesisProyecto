@@ -1,9 +1,107 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-//import 'package:flutter_tesis/listas/pruebas/listas_pruebas.dart';
-import 'package:flutter_tesis/provider/auth_provider.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
+// 1. Convertimos a un StatefulWidget
+class VideoScreen extends StatefulWidget {
+  final String videoTitle;
+  final String videoUrl;
+
+  const VideoScreen({
+    super.key,
+    required this.videoTitle,
+    required this.videoUrl,
+  });
+
+  @override
+  State<VideoScreen> createState() => _VideoScreenState();
+}
+
+class _VideoScreenState extends State<VideoScreen> {
+  // 2. Creamos el controlador para el reproductor de YouTube
+  late final YoutubePlayerController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // 3. Extraemos el ID del video desde la URL que recibimos
+    final videoId = YoutubePlayer.convertUrlToId(widget.videoUrl);
+
+    // 4. Inicializamos el controlador con el ID del video
+    _controller = YoutubePlayerController(
+      initialVideoId: videoId ?? '', // Si el ID es nulo, usa uno vacío
+      flags: const YoutubePlayerFlags(
+        autoPlay: true, // El video empieza a reproducirse automáticamente
+        mute: false,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    // 5. Es muy importante liberar los recursos del controlador al salir
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Videos'),
+      ),
+      // 6. Usamos el widget YoutubePlayer para mostrar el video
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start, 
+        children: [
+  
+         Center(
+              child: Text(
+                widget.videoTitle,
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          
+          const SizedBox(height: 8),
+
+         Flexible(
+                  child: SelectableText(
+                    widget.videoUrl,
+                    style: const TextStyle(fontSize: 16, color: Colors.blue),
+                  ),
+         ),  
+        
+         const SizedBox(height: 8),
+         
+          YoutubePlayer(
+            controller: _controller,
+            showVideoProgressIndicator: true,
+            progressIndicatorColor: Colors.amber,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
 class VideoScreen extends ConsumerWidget {
   // 2. Recibe el título y la URL del video en su constructor.
   final String videoTitle;
@@ -77,85 +175,10 @@ class VideoScreen extends ConsumerWidget {
                 ),
               ],
             ),
-
             Divider()
-           /* SelectableText(
-              videoUrl,
-              style: const TextStyle(fontSize: 16, color: Colors.blue),
-            ),
-            const SizedBox(height: 30),*/
-            
-            // Botón para abrir el video
-            /*Center(
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.play_circle_fill),
-                label: const Text('Abrir Video'),
-                onPressed: () => _launchVideoUrl(ref),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                  textStyle: const TextStyle(fontSize: 18),
-                ),
-              ),
-            ),*/
           ],
         ),
       ),
-    );
-  }
-}
-
-
-
-
-
-/*
-class Videos extends StatelessWidget {
-  const Videos({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-  //   final colors= Theme.of(context).colorScheme;
-    return Scaffold(
-       appBar: AppBar(   
-   //     backgroundColor: colors.primary,
-        title: Text('VIDEOS'),
-        centerTitle: true, 
-        //centrar en ios y android
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-           SizedBox(height: 10),
-
-           Padding(
-             padding: const EdgeInsets.symmetric(horizontal: 10),
-             child: ListView.builder(
-              shrinkWrap: true, 
-              itemCount: appMenuItems.length,
-              itemBuilder: (context, index){
-                return Container(
-                 decoration: BoxDecoration(
-                 border: BorderDirectional(bottom: BorderSide(color: Colors.grey,width: 1))
-                 ),
-                  child: Column(          
-                    children: [
-                     Align(alignment: Alignment.centerLeft,
-                      child: Text('Video ${index+1}:',style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))
-                      ),
-                     Align(alignment: Alignment.centerLeft,
-                      child: Text('https://www.youtube.com/watch?v=hT_nvWreIhg',style: TextStyle(fontSize: 14))
-                      ),
-             
-                      SizedBox(height: 10),
-                    ],
-                  ),
-                );                               
-              },
-             ),
-           ),
-          ],
-
-        ))
     );
   }
 }*/
