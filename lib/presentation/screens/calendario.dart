@@ -14,7 +14,7 @@ class Calendario extends ConsumerWidget {
     if (timestamp == 0) return 'Fecha no definida';
     initializeDateFormatting('es');
     final date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
-    return DateFormat.yMd('es').format(date); // Formato: 20/05/2025
+    return DateFormat.yMd('es').format(date); 
   }
 
   @override
