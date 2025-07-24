@@ -101,7 +101,7 @@ class _EventCard extends StatelessWidget {
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.assignment_outlined, color: Colors.black),
+              leading: const Icon(Icons.content_paste_go_rounded, color: Colors.black),
               title: Text(eventName),
               subtitle: Align(
                 alignment: Alignment.centerRight,
