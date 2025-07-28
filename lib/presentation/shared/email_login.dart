@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 class EmailLogin extends StatelessWidget {
-  const EmailLogin({super.key});
+  final TextEditingController controller;
+  const EmailLogin({super.key, required this.controller});
 
   @override
   Widget build(BuildContext context) {
-    final textControler= TextEditingController();
+   // final textControler= TextEditingController();
     final focusNode = FocusNode();
 
     final outlineInputBorder = UnderlineInputBorder(
@@ -21,10 +22,12 @@ class EmailLogin extends StatelessWidget {
       suffixIcon: IconButton(
         icon: const Icon(Icons.email),
         onPressed: (){
-          final textValue= textControler.value.text;
+     //     final textValue= textControler.value.text;
+         // final textValue= controller.value.text;
           // ignore: avoid_print
-          print('butoom: $textValue');
-          textControler.clear();
+         // print('butoom: $textValue');
+         // textControler.clear();
+    //      controller.clear();
         },
       ),
     );
@@ -34,14 +37,22 @@ class EmailLogin extends StatelessWidget {
     return TextFormField(
       //keyboardType: , correo
       focusNode: focusNode,
-      controller: textControler,
+    //  controller: textControler,
+      controller: controller,
       decoration: inputDecoration,
-      onFieldSubmitted: (value) {   //recibir parametros
-        // ignore: avoid_print
-        print('submit: $value');
-        textControler.clear();
-        focusNode.requestFocus();
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Falta rellenar el campo email'; // Mensaje de error en rojo
+        }
+        return null; // Válido
       },
+     /* onFieldSubmitted: (value) {   //recibir parametros
+        // ignore: avoid_print
+       // print('submit: $value');
+      //  textControler.clear();
+    //    controller.clear();
+        focusNode.requestFocus();
+      },*/
   /*    onChanged: (value) {
         print('changed: $value');
       },*/

@@ -1,6 +1,9 @@
+//import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tesis/config/app_router.dart';
+//import 'package:flutter_tesis/presentation/screens/login.dart';
 import 'package:flutter_tesis/provider/theme_provider.dart';
 //import 'package:flutter_tesis/presentation/screens/editar_perfil.dart';
 //import 'package:flutter_tesis/presentation/screens/calendario.dart';
@@ -14,6 +17,7 @@ import 'package:flutter_tesis/provider/theme_provider.dart';
 import 'package:flutter_tesis/theme/app_temas.dart';
 
 void main(){
+//  HttpOverrides.global = MyHttpOverrides();
   runApp(
     ProviderScope(child: MyApp())
   );

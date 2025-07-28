@@ -1,8 +1,157 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_tesis/listas/pruebas/listas_pruebas.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+//import 'package:flutter_tesis/listas/pruebas/listas_pruebas.dart';
+import 'package:flutter_tesis/provider/course_content_provider.dart';
 import 'package:go_router/go_router.dart';
+//import 'package:go_router/go_router.dart';
 
-class Materias extends StatelessWidget {
+// archivo: materias.dart
+
+// 1. El widget ahora es un ConsumerWidget y recibe el courseId
+class Materias extends ConsumerWidget {
+  final int courseId;
+  const Materias({super.key, required this.courseId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // 2. Observamos el provider, pasándole el ID del curso
+    final asyncCourseContent = ref.watch(courseContentProvider(courseId));
+    final colors= Theme.of(context).colorScheme;
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Contenido del Curso'),
+      ),
+      // 3. Usamos .when para manejar los estados de carga
+      body: asyncCourseContent.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err')),
+        data: (sections) {  
+          return ListView.builder(
+            itemCount: sections.length,
+            itemBuilder: (context, index) {
+              final section = sections[index];
+              final List modules = section['modules'] ?? [];
+              return ExpansionTile(
+                title: Text(section['name'] ?? 'Sección sin nombre'),
+                children: modules.map((module) {
+                  final String moduleName = module['name'] ?? 'Módulo sin nombre';
+                  final String modname = module['modname'] ?? '';
+                  return ListTile(
+                    leading: getModuleIcon(modname, colors.primary),// Lógica de iconos
+                    title: Text(moduleName),
+                    onTap: () {
+                      // Obtenemos el tipo de módulo, por ejemplo: 'folder', 'url', 'label', 'resource'.
+                      final String modname = module['modname'] ?? '';
+
+                      // Usamos un switch para decidir qué hacer según el tipo de módulo.
+                      switch (modname) {                   
+                        // Caso 1: Es una carpeta con archivos.
+                        case 'folder':
+                        case 'resource':
+                          final List contents = module['contents'] ?? [];
+                          if (contents.isNotEmpty) {
+                            context.push('/recursos', extra: contents);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Este módulo no tiene contenido.')),
+                            );
+                          }
+                          break;
+
+                        // Caso 2: Es un enlace (URL), como un video.
+                        case 'url':
+                          final List contents = module['contents'] ?? [];
+                          if (contents.isNotEmpty) {
+                            // Obtenemos la URL externa del primer archivo.
+                            final String videoUrl = contents[0]['fileurl'] ?? '';
+                            if (videoUrl.isNotEmpty) {
+                              // Aquí puedes navegar a una pantalla de video o lanzarla directamente.
+                              // Por ahora, la lanzaremos con url_launcher.
+                              // Asegúrate de tener la lógica para añadir el token.
+                              // _downloadFile(ref, videoUrl); // Reutilizando la función de descarga
+                              print('Navegar a video: $videoUrl');
+                              context.push('/videos', extra: {'title': module['name'], 'url': videoUrl});
+                            }
+                          }
+                         break;
+                         
+                                                // Dentro del switch (modname) en el onTap
+                        case 'assign':
+                          // El ID de la tarea se encuentra en la clave 'instance' del módulo
+                          final int assignmentId = module['instance'];
+                          context.push('/actividades/$courseId/$assignmentId');
+                        break;
+                        // Caso 3: Es una etiqueta de texto o una página (para la introducción).
+                        case 'label':
+                        case 'page':
+                          final String description = module['description'] ?? 'No hay descripción.';
+                          // Navegamos a una nueva pantalla de descripción y le pasamos el texto.
+                          print('Navegar a descripción: $description');
+                          context.push('/description', extra: description);
+                          break;
+                        
+                        case 'forum':
+                        // El ID del foro se encuentra en la clave 'instance' del módulo
+                        final int forumId = module['instance'];
+                        context.push('/foro/$forumId');
+                        break;
+                        // Caso por defecto: para cualquier otro tipo de módulo.
+                        default:
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Este tipo de contenido no es soportado aún.')),
+                          );
+                          break;
+                      }
+                    },
+
+                  );
+                }).toList(),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+
+
+Widget getModuleIcon(String modname, Color primaryColor) {
+  
+  switch (modname) {
+     case 'assign': // <-- Añade este caso para las tareas
+      return Icon(Icons.assignment_turned_in_outlined, color: Colors.orange.shade700);
+    case 'resource':
+      return Icon(Icons.archive_sharp, color:primaryColor);
+    case 'label':
+      return Icon(Icons.info, color: Colors.green); // Cambiado a un ícono más descriptivo
+    case 'folder':
+      return const Icon(Icons.folder_copy_sharp, color: Colors.yellow); // Cambiado a un ícono de carpeta
+    case 'url':
+      return Icon(Icons.link, color: Colors.grey); // Cambiado a un ícono de enlace
+    default:
+      return const Icon(Icons.description_outlined);
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*class Materias extends StatelessWidget {
   const Materias({super.key});
 
   @override
@@ -166,4 +315,4 @@ class NavegacionMaterias extends StatelessWidget {
         ),
       ));
   }
-}
+}*/
