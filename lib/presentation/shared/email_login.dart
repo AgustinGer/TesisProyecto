@@ -40,13 +40,19 @@ class EmailLogin extends StatelessWidget {
     //  controller: textControler,
       controller: controller,
       decoration: inputDecoration,
-      onFieldSubmitted: (value) {   //recibir parametros
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Falta rellenar el campo email'; // Mensaje de error en rojo
+        }
+        return null; // Válido
+      },
+     /* onFieldSubmitted: (value) {   //recibir parametros
         // ignore: avoid_print
        // print('submit: $value');
       //  textControler.clear();
     //    controller.clear();
         focusNode.requestFocus();
-      },
+      },*/
   /*    onChanged: (value) {
         print('changed: $value');
       },*/

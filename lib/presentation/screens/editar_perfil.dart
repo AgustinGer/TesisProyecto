@@ -6,6 +6,7 @@ import 'package:flutter_tesis/provider/auth_provider.dart';
 import 'package:flutter_tesis/provider/user_profile.dart';
 //import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 
 // Importa tus providers
 //import 'package:flutter_tesis/providers/auth_provider.dart';
@@ -24,12 +25,16 @@ class _EditarPerfilState extends ConsumerState<EditarPerfil> {
   final _descriptionController = TextEditingController();
   final _interestsController = TextEditingController();
 
+  String _initialDescription = '';
+  String _initialInterests = '';
+
+  bool _hasChanges = false; // Para saber si hay cambios
   // Variable para guardar la imagen seleccionada
   File? _pickedImage;
   bool _isLoading = false;
 
   // Función para seleccionar una imagen de la galería
-  /*Future<void> _pickImage() async {
+  Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
@@ -38,11 +43,62 @@ class _EditarPerfilState extends ConsumerState<EditarPerfil> {
         _pickedImage = File(pickedFile.path);
       });
     }
-  }*/
+  }
+  @override
+  void initState() {
+    super.initState();
+    // Añade 'listeners' para detectar cuando el usuario escribe algo
+    _descriptionController.addListener(_checkForChanges);
+    _interestsController.addListener(_checkForChanges);
+  }
 
+  void _checkForChanges() {
+    final hasChanged = _descriptionController.text != _initialDescription || 
+                       _interestsController.text != _initialInterests;
+    if (hasChanged != _hasChanges) {
+      setState(() {
+        _hasChanges = hasChanged;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _descriptionController.removeListener(_checkForChanges);
+    _interestsController.removeListener(_checkForChanges);
+    _descriptionController.dispose();
+    _interestsController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _showExitDialog() async {
+    final shouldPop = await showAdaptiveDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog.adaptive(
+        title: const Text('Cambios sin Guardar'),
+        content: const Text('¿Estás seguro de que quieres salir sin guardar los datos?'),
+        actions: [
+          TextButton(
+            child: const Text('Regresar'),
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+          TextButton(
+            child: const Text('Salir'),
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ],
+      ),
+    );
+
+        if (shouldPop ?? false) {
+      if(mounted) Navigator.of(context).pop();
+    }
+  }
   // Función para guardar los cambios en Moodle
   // En tu archivo editar_perfil.dart
+  // Función que muestra el diálogo de confirmación
 
+  
 Future<void> _saveProfile() async {
   setState(() { _isLoading = true; });
 
@@ -163,93 +219,106 @@ print(_pickedImage!.path);
     // Escucha al provider del perfil para obtener los datos iniciales
     final asyncProfile = ref.watch(userProfileProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('EDITAR PERFIL'),
-        centerTitle: true,
-      ),
-      // Muestra la UI según el estado del provider
-      body: asyncProfile.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error al cargar perfil: $err')),
-        data: (user) {
-          // Asigna los datos iniciales a los controladores solo una vez
-         // _descriptionController.text = user['description'] ?? '';
-           // Extraemos la descripción con HTML
-          final String rawDescription = user['description'] ?? '';
+    return PopScope(
+       canPop: !_hasChanges, // Bloquea el botón de atrás si hay cambios
+       onPopInvokedWithResult:(bool didPop, dynamic result) {
+       if (didPop) return;
+       _showExitDialog();
+     },
 
-          // Limpiamos las etiquetas HTML y asignamos el texto limpio al controlador
-          _descriptionController.text = rawDescription.replaceAll(RegExp(r'<[^>]*>'), '').trim(); 
-          _interestsController.text = user['interests'] ?? '';
-
-          return ListView(
-            padding: const EdgeInsets.all(16.0),
-            children: [
-              const Text('Descripción', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _descriptionController,
-                maxLines: 4,
-                decoration: const InputDecoration(border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 24),
-              
-              const Text('Intereses (separados por coma)', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _interestsController,
-                decoration: const InputDecoration(border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 24),
-
-           /*   const Text('Imagen de Usuario', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  height: 200,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey),
-                    // Muestra la imagen seleccionada o la imagen actual del usuario
-                    image: _pickedImage != null
-                        ? DecorationImage(image: FileImage(_pickedImage!), fit: BoxFit.cover)
-                        : (user['profileimageurl'] != null && user['profileimageurl'].isNotEmpty)
-                            ? DecorationImage(image: NetworkImage(user['profileimageurl']), fit: BoxFit.cover)
-                            : null,
-                  ),
-                  // Muestra el ícono de subir solo si no hay imagen
-                  child: (_pickedImage == null && (user['profileimageurl'] == null || user['profileimageurl'].isEmpty))
-                      ? const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.cloud_upload_outlined, size: 60, color: Colors.grey),
-                              SizedBox(height: 8),
-                              Text('Toca para cambiar de imagen'),
-                            ],
-                          ),
-                        )
-                      : null,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('EDITAR PERFIL'),
+          centerTitle: true,
+        ),
+        // Muestra la UI según el estado del provider
+        body: asyncProfile.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (err, stack) => Center(child: Text('Error al cargar perfil: $err')),
+          data: (user) {
+            // Asigna los datos iniciales a los controladores solo una vez
+           // _descriptionController.text = user['description'] ?? '';
+             // Extraemos la descripción con HTML
+            final String rawDescription = user['description'] ?? '';
+            if (!_hasChanges) {
+              _initialDescription = rawDescription.replaceAll(RegExp(r'<[^>]*>'), '').trim(); 
+              _initialInterests = user['interests'] ?? '';
+              _descriptionController.text = _initialDescription;
+              _interestsController.text = _initialInterests;
+            }      
+            // Limpiamos las etiquetas HTML y asignamos el texto limpio al controlador
+        //    _descriptionController.text = rawDescription.replaceAll(RegExp(r'<[^>]*>'), '').trim(); 
+        //    _interestsController.text = user['interests'] ?? '';
+      
+            return ListView(
+              padding: const EdgeInsets.all(16.0),
+              children: [
+                const Text('Descripción', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _descriptionController,
+                  maxLines: 4,
+                  decoration: const InputDecoration(border: OutlineInputBorder()),
                 ),
-              ),*/
-              const SizedBox(height: 32),
-              
-              _isLoading 
-                ? const Center(child: CircularProgressIndicator())
-                : FilledButton(
-                    onPressed: _saveProfile,
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16)
+                const SizedBox(height: 24),
+                
+                const Text('Intereses (separados por coma)', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _interestsController,
+                  decoration: const InputDecoration(border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 24),
+      
+               const Text('Imagen de Usuario', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    height: 200,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey),
+                      // Muestra la imagen seleccionada o la imagen actual del usuario
+                      image: _pickedImage != null
+                          ? DecorationImage(image: FileImage(_pickedImage!), fit: BoxFit.cover)
+                          : (user['profileimageurl'] != null && user['profileimageurl'].isNotEmpty)
+                              ? DecorationImage(image: NetworkImage(user['profileimageurl']), fit: BoxFit.cover)
+                              : null,
                     ),
-                    child: const Text('Guardar Cambios'),
+                    // Muestra el ícono de subir solo si no hay imagen
+                    child: (_pickedImage == null && (user['profileimageurl'] == null || user['profileimageurl'].isEmpty))
+                        ? const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.cloud_upload_outlined, size: 60, color: Colors.grey),
+                                SizedBox(height: 8),
+                                Text('Toca para cambiar de imagen'),
+                              ],
+                            ),
+                          )
+                        : null,
                   ),
-            ],
-          );
-        },
+                ),
+                const SizedBox(height: 32),
+                
+                _isLoading 
+                  ? const Center(child: CircularProgressIndicator())
+                  : FilledButton(
+                      onPressed: _saveProfile,
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16)
+                      ),
+                      child: const Text('Guardar Cambios'),
+                    ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
-}
+ }

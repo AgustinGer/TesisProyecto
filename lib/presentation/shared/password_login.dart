@@ -40,13 +40,19 @@ class PasswordLogin extends StatelessWidget {
      // controller: textControler,
       controller: passwordcontroller,
       decoration: inputDecoration,
-      onFieldSubmitted: (value) {   //recibir parametros
+       validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Falta rellenar el campo password'; // Mensaje de error en rojo
+        }
+        return null; // Válido
+      },
+ /*     onFieldSubmitted: (value) {   //recibir parametros
         // ignore: avoid_print
         //print('submit: $value');
         //textControler.clear();
       //  passwordcontroller.clear();
         focusNode.requestFocus();
-      },
+      },*/
   /*    onChanged: (value) {
         print('changed: $value');
       },*/

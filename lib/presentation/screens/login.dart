@@ -36,21 +36,25 @@ class BodyLogin extends ConsumerStatefulWidget {
 }
 
 class _BodyLoginState extends ConsumerState<BodyLogin> {
+
+  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
 
   // Limpiamos la función _login para que haga solo lo necesario
   Future<void> _login() async {
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, ingresa email y contraseña')),
-      );
+    //if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      if (!_formKey.currentState!.validate()) {
+    //  ScaffoldMessenger.of(context).showSnackBar(
+      //  const SnackBar(content: Text('Por favor, ingresa email y contraseña')),
+      //);
       return;
     }
 
     setState(() { _isLoading = true; });
 
+    
 
     const String loginUrl = 'http://192.168.1.45/tesismovil/login/token.php';
     const String apiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php';
@@ -138,58 +142,65 @@ class _BodyLoginState extends ConsumerState<BodyLogin> {
         child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 75, vertical: 70),
        
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-
-        /*Center(
-              child: SizedBox(
-                child: CircleAvatar(
-                   backgroundImage: NetworkImage('https://kachagain.com/llsif/ur/955.png'),
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+             child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+          
+          /*Center(
+                child: SizedBox(
+                  child: CircleAvatar(
+                     backgroundImage: NetworkImage('https://kachagain.com/llsif/ur/955.png'),
+                  ),
+                ),
+              ),*/
+          
+              SizedBox(height: 50),
+              
+              Center(
+                child: Container(
+                 height: 250,
+                 width: 250,     
+                 decoration: BoxDecoration(
+                // color: Colors.black,
+                 borderRadius: BorderRadius.circular(20),
+                // image: DecorationImage(image: NetworkImage('https://img.freepik.com/vector-premium/logo-nombre-universidad-logo-empresa-llamada-universidad_516670-732.jpg'),fit:BoxFit.cover ),
+                 image: DecorationImage(image: AssetImage( 'assets/imagenes/logo.png'), fit: BoxFit.fill),
+                  ),
                 ),
               ),
-            ),*/
-
-            SizedBox(height: 50),
-            
-            Center(
-              child: Container(
-               height: 200,
-               width: 300,     
-               decoration: BoxDecoration(
-              // color: Colors.black,
-               borderRadius: BorderRadius.circular(20),
-               image: DecorationImage(image: NetworkImage('https://img.freepik.com/vector-premium/logo-nombre-universidad-logo-empresa-llamada-universidad_516670-732.jpg'),fit:BoxFit.cover ),
-                ),
-              ),
-            ),
-
-            SizedBox(height: 40),
-
-            Text('Email address or usarname'),
-
-            EmailLogin(controller: _emailController),
-            
-            SizedBox(height: 20),
-
-            Text('Password'),
-
-            PasswordLogin(passwordcontroller: _passwordController),
-            
-            SizedBox(height: 20),
-
-            Center(
-              child: _isLoading
-              ? const CircularProgressIndicator()
-              : ElevatedButton(
-                onPressed:_login,
-                 style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 50)
-                 ),
-                child: Text('Log in', style: TextStyle(color: colors.primary),)),
-            )
-
-          ],
+          
+              SizedBox(height: 40),
+          
+              Text('Email address'),
+          
+              EmailLogin(controller: _emailController),
+              
+              SizedBox(height: 20),
+          
+              Text('Password'),
+          
+              PasswordLogin(passwordcontroller: _passwordController),
+              
+              SizedBox(height: 20),
+          
+              Center(
+                child: _isLoading
+                ? const CircularProgressIndicator()
+                : ElevatedButton(
+                  onPressed:_login,
+                   style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 50)
+                   ),
+                  child: Text('Log in', style: TextStyle(color: colors.primary),)),
+              )
+          
+            ],
+          ),
+         ), 
         ),
       ),
     );
