@@ -17,13 +17,13 @@ class DescriptionScreen extends StatelessWidget {
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
         child: Html(
-          data: description, // Le pasamos el string con el contenido HTML
+          data: description, 
           style: {
             "body": Style(
               fontSize: FontSize(16.0),
               lineHeight: LineHeight.number(1.5),
             ),
-            "p": Style( // Estilo para los párrafos
+            "p": Style( 
                padding: HtmlPaddings.zero,
                margin: Margins.zero,
             ),

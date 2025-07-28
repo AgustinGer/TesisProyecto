@@ -206,7 +206,7 @@ class _ActividadesScreenState extends ConsumerState<ActividadesScreen> {
                   }
                 ),
                 
-                /*const Divider(height: 30),
+                const Divider(height: 30),
 
                 // --- NUEVA SECCIÓN DE UI PARA LA ENTREGA ---
                 const Text('Entrega', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
@@ -256,7 +256,7 @@ class _ActividadesScreenState extends ConsumerState<ActividadesScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15)
                       ),
                     ),
-                  )*/
+                  )
                 // ------------------------------------------
               ],
             ),
