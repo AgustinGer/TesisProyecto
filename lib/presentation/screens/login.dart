@@ -55,9 +55,15 @@ class _BodyLoginState extends ConsumerState<BodyLogin> {
     setState(() { _isLoading = true; });
 
     
-
+// 172.29.15.191
     const String loginUrl = 'http://192.168.1.45/tesismovil/login/token.php';
-    const String apiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php';
+    //const String apiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php';
+    final apiUrl = ref.watch(moodleApiUrlProvider);
+
+    
+   // const String loginUrl = 'http://172.29.15.191/tesismovil/login/token.php';
+   // const String apiUrl = 'http://172.29.15.191/tesismovil/webservice/rest/server.php';
+
     const String service = 'my_Api';
     //const String adminToken = '3a3559654e6130b6c670c7eb1444a574'; 
     try {
@@ -96,8 +102,8 @@ class _BodyLoginState extends ConsumerState<BodyLogin> {
         // --- PASO 3: Guardar el token de ADMIN y el ID del USUARIO en Riverpod ---
        // ref.read(authTokenProvider.notifier).state = adminToken;
        ref.read(authTokenProvider.notifier).state = userToken;
-        ref.read(userIdProvider.notifier).state = userId;
-
+       ref.read(userIdProvider.notifier).state = userId;
+       ref.read(urlProvider.notifier).state = apiUrl;
         // --- PASO 4: Navegar a la pantalla de inicio ---
         if (mounted) { // Verificación de seguridad
           context.push('/inicio');

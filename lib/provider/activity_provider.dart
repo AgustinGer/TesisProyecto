@@ -4,11 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tesis/provider/auth_provider.dart';
 import 'package:http/http.dart' as http;
 
-//import 'package:flutter_tesis/providers/auth_provider.dart';
+//import 'package:flutter_tesis/provider/auth_provider.dart';
 
-const String moodleApiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php';
+//const String moodleApiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php';
 
 final assignmentDetailsProvider = FutureProvider.family<Map<String, dynamic>, Map<String, int>>((ref, ids) async {
+  final moodleApiUrl = ref.watch(moodleApiUrlProvider);
   print('--- VERIFICADOR: assignmentDetailsProvider INICIADO ---');
   final token = ref.watch(authTokenProvider);
   if (token == null) throw Exception('No autenticado');
@@ -48,7 +49,7 @@ final assignmentDetailsProvider = FutureProvider.family<Map<String, dynamic>, Ma
       'courseids[0]': courseId.toString(),
     },
   ).timeout(const Duration(seconds: 20));
- print(courseId);
+  print(courseId);
   print('--- VERIFICADOR: Respuesta de get_assignments RECIBIDA ---');
   final data = json.decode(response.body);
   if (data is Map && data.containsKey('exception')) {
@@ -71,6 +72,7 @@ final assignmentDetailsProvider = FutureProvider.family<Map<String, dynamic>, Ma
 
 final submissionStatusProvider = FutureProvider.family<Map<String, dynamic>, int>((ref, assignmentId) async {
   //print('');
+  final moodleApiUrl = ref.watch(moodleApiUrlProvider);
   final token = ref.watch(authTokenProvider);
   if (token == null) throw Exception('No autenticado');
 

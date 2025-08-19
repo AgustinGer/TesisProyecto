@@ -25,7 +25,9 @@ final coursesProvider = FutureProvider<List<Course>>((ref) async {
   print('Usando UserID: $userId');
   print('-------------------------------------------');
 
-  const String moodleApiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php'; // Usa tu IP real
+  //const String moodleApiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php'; // Usa tu IP real
+   final moodleApiUrl = ref.watch(moodleApiUrlProvider);
+  //const String moodleApiUrl = 'http://172.29.15.191/tesismovil/webservice/rest/server.php';
 
   // 4. Su única responsabilidad: llamar a la API para obtener los cursos del usuario.
   final response = await http.post(

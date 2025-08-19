@@ -20,8 +20,8 @@ final userProfileProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   }
 
   // Tu URL de la API
-  const String apiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php';
-
+  //const String apiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php';
+  final apiUrl = ref.watch(moodleApiUrlProvider);
   final response = await http.post(
     Uri.parse(apiUrl),
     body: {

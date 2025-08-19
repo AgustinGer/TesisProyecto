@@ -11,7 +11,8 @@ final calendarEventsProvider = FutureProvider<List<dynamic>>((ref) async {
   final token = ref.watch(authTokenProvider);
   if (token == null) throw Exception('No autenticado');
 
-  const moodleApiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php';
+  //const moodleApiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php';
+  final moodleApiUrl = ref.watch(moodleApiUrlProvider);
   
   final response = await http.post(
     Uri.parse(moodleApiUrl),
@@ -39,7 +40,8 @@ final submissionStatusProviderCalendario =
   final token = ref.watch(authTokenProvider);
   if (token == null) throw Exception('No autenticado');
 
-  const moodleApiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php';
+  //const moodleApiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php';
+   final moodleApiUrl = ref.watch(moodleApiUrlProvider);
   // --- Paso 1: Usamos el cmid para obtener el ID real de la tarea (assignmentId) ---
   final moduleResponse = await http.post(
     Uri.parse(moodleApiUrl),
