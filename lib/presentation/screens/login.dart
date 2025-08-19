@@ -116,7 +116,7 @@ class _BodyLoginState extends ConsumerState<BodyLogin> {
       // Manejar errores de red o cualquier otra excepción
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error de conexión o del servidor.')),
+          const SnackBar(content: Text('Error de identificación.')),
         );
       }
     } finally {

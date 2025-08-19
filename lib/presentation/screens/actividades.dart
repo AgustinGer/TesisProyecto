@@ -21,8 +21,10 @@ import 'package:flutter_tesis/provider/auth_provider.dart';
 class ActividadesScreen extends ConsumerStatefulWidget {
   final int courseId;
   final int assignmentId;
+  
   //const ActividadesScreen({super.key, required this.courseId, required this.assignmentId});
 const ActividadesScreen({super.key, required this.courseId, required this.assignmentId});
+
 
   @override
   ConsumerState<ActividadesScreen> createState() => _ActividadesScreenState();
@@ -130,6 +132,10 @@ class _ActividadesScreenState extends ConsumerState<ActividadesScreen> {
         // Si todo va bien, refresca los datos de la pantalla
         ref.invalidate(assignmentDetailsProvider(_detailsProviderParams));
         ref.invalidate(submissionStatusProvider(widget.assignmentId));
+        /*ref.invalidate(submissionStatusProvider({
+          'courseId': widget.courseId,
+          'assignmentId': widget.assignmentId,
+        }));*/
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -173,8 +179,14 @@ class _ActividadesScreenState extends ConsumerState<ActividadesScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error al cargar detalles: $err')),
         data: (details) {
-          final asyncStatus = ref.watch(submissionStatusProvider(widget.assignmentId));
+      
+       final asyncStatus = ref.watch(submissionStatusProvider(widget.assignmentId));
           
+      //  final asyncStatus = ref.watch(submissionStatusProvider({
+      //    'courseId': widget.courseId,
+      //    'assignmentId': widget.assignmentId,
+      //  }));
+
           final String title = details['name'] ?? 'Tarea sin título';
           final String intro = details['intro'] ?? '<p>Sin descripción.</p>';
           final int dueDate = details['duedate'] ?? 0;

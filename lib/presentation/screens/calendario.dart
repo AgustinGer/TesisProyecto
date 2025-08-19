@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+//import 'package:flutter_tesis/provider/activity_provider.dart';
+//import 'package:flutter_tesis/provider/activity_provider.dart';
+//import 'package:flutter_tesis/provider/auth_provider.dart';
 import 'package:flutter_tesis/provider/calendar_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -49,14 +52,14 @@ class Calendario extends ConsumerWidget {
 }
 
 // Widget para mostrar una sola tarjeta de evento
-class _EventCard extends StatelessWidget {
+class _EventCard extends ConsumerWidget {
   final Map<String, dynamic> event;
   final String Function(int) formatTimestamp;
 
   const _EventCard({required this.event, required this.formatTimestamp});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors= Theme.of(context).colorScheme;
     final String courseName = event['course']['fullname'] ?? 'General';
     //final String eventName = event['name'] ?? 'Evento sin nombre';
@@ -72,17 +75,36 @@ class _EventCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12.0),
       child: InkWell(
         borderRadius: BorderRadius.circular(8),
-        onTap: () {
+        onTap: () async {
           // Verificamos que el evento sea una tarea ('assign')
           if (event['modulename'] == 'assign') {
-            
-            // --- ESTA ES LA PARTE IMPORTANTE ---
-            // Extraemos ambos IDs directamente del evento del calendario
+          //  final int cmid = event['id']; 
+            final int cmid = event['instance'];// <-- ID que viene del calendario
             final int courseId = event['course']['id'];
-            final int assignmentId = event['instance'];
-            
+              print(cmid);
+            // Extraemos ambos IDs directamente del evento del calendario
+           // final int courseId = event['course']['id'];
+           
+           // final int assignmentId = event['instance'];
+           
+          try {
+                // Obtenemos el assignmentId real usando tu provider
+                final assignmentId = await ref
+          .read(submissionStatusProviderCalendario(cmid).future); 
+                print(assignmentId);
+                print(courseId);
+                // Navegamos a la ruta que espera ambos IDs
+                context.push('/actividades/$courseId/$assignmentId');
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error obteniendo tarea: $e')),
+                );
+              }
+
             // Navegamos a la ruta que espera AMBOS IDs
-            context.push('/actividades/$courseId/$assignmentId');
+           
+
+           // context.push('/actividades/$courseId/$assignmentId');
 
           } else {
             // Opcional: manejar otros tipos de eventos si quieres

@@ -30,3 +30,37 @@ final calendarEventsProvider = FutureProvider<List<dynamic>>((ref) async {
     throw Exception('Error al cargar los eventos del calendario');
   }
 });
+
+
+final submissionStatusProviderCalendario = 
+    FutureProvider.family<int, int>((ref, cmid) async {
+  print('--- VERIFICADOR: submissionStatusProviderCalendario INICIADO con cmid: $cmid ---');
+
+  final token = ref.watch(authTokenProvider);
+  if (token == null) throw Exception('No autenticado');
+
+  const moodleApiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php';
+  // --- Paso 1: Usamos el cmid para obtener el ID real de la tarea (assignmentId) ---
+  final moduleResponse = await http.post(
+    Uri.parse(moodleApiUrl),
+    body: {
+      'wstoken': token,
+      'wsfunction': 'core_course_get_course_module',
+      'moodlewsrestformat': 'json',
+      'cmid': cmid.toString(),
+    },
+  ).timeout(const Duration(seconds: 20));
+
+  if (moduleResponse.statusCode != 200) {
+    throw Exception('Error al buscar el módulo del curso');
+  }
+
+  final moduleData = json.decode(moduleResponse.body);
+  if (moduleData.containsKey('exception')) {
+    throw Exception('Error de Moodle al buscar el módulo: ${moduleData['message']}');
+  }
+
+  // Extraemos el ID real de la tarea
+  final int assignmentId = moduleData['cm']['instance'];
+  return assignmentId; // <-- Esto es un int
+});
