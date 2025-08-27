@@ -10,8 +10,6 @@ import 'package:http/http.dart' as http;
 final calendarEventsProvider = FutureProvider<List<dynamic>>((ref) async {
   final token = ref.watch(authTokenProvider);
   if (token == null) throw Exception('No autenticado');
-
-  //const moodleApiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php';
   final moodleApiUrl = ref.watch(moodleApiUrlProvider);
   
   final response = await http.post(

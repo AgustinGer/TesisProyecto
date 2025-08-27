@@ -12,12 +12,7 @@ final appRouter = GoRouter(
   routes: [
     GoRoute(
       path: '/inicio',
-      /*builder: (context, state) {
-       final params = state.extra as Map<String, dynamic>;
-       final token = params['token']!;
-       final email = params['email']!;*/
        builder: (context, state) => const Inicio(),
-       //return Inicio(token: token, email: email);
       
     ),
     

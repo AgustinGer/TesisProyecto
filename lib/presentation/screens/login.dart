@@ -55,7 +55,7 @@ class _BodyLoginState extends ConsumerState<BodyLogin> {
     setState(() { _isLoading = true; });
 
     
-// 172.29.15.191
+// 172.29.15.191f
     const String loginUrl = 'http://192.168.1.45/tesismovil/login/token.php';
     //const String apiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php';
     final apiUrl = ref.watch(moodleApiUrlProvider);
@@ -88,7 +88,6 @@ class _BodyLoginState extends ConsumerState<BodyLogin> {
           Uri.parse(apiUrl),
           body: {
             'wstoken': userToken,
-           // 'wstoken': adminToken,
             'wsfunction': 'core_user_get_users_by_field',
             'moodlewsrestformat': 'json',
             'field': 'email',
@@ -106,7 +105,8 @@ class _BodyLoginState extends ConsumerState<BodyLogin> {
        ref.read(urlProvider.notifier).state = apiUrl;
         // --- PASO 4: Navegar a la pantalla de inicio ---
         if (mounted) { // Verificación de seguridad
-          context.push('/inicio');
+          //context.push('/inicio');
+           context.go('/inicio'); 
         }
 
       } else {
@@ -201,7 +201,7 @@ class _BodyLoginState extends ConsumerState<BodyLogin> {
                    style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 50)
                    ),
-                  child: Text('Log in', style: TextStyle(color: colors.primary),)),
+                  child: Text('Login', style: TextStyle(color: colors.primary),)),
               )
           
             ],
