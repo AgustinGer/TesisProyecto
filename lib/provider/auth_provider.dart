@@ -10,6 +10,12 @@ final userIdProvider = StateProvider<int?>((ref) => null);
 //provider de la url
 final urlProvider= StateProvider<String?>((ref) => null);
 
+// Definir los roles posibles
+enum UserRole { estudiante, profesor, admin }
+
+// Provider para el rol
+final userRoleProvider = StateProvider<UserRole>((ref) => UserRole.estudiante);
+
 final moodleApiUrlProvider = Provider<String>((ref) {
   // Aquí defines la URL base de tu API en un solo lugar.
   // Cámbiala aquí cuando te conectes a otra red.

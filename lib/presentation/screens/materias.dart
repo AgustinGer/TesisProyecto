@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_tesis/provider/auth_provider.dart';
+import 'package:flutter_tesis/provider/course_actions_provider.dart';
 //import 'package:flutter_tesis/listas/pruebas/listas_pruebas.dart';
 import 'package:flutter_tesis/provider/course_content_provider.dart';
 import 'package:go_router/go_router.dart';
@@ -15,18 +17,37 @@ class Materias extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // 2. Observamos el provider, pasándole el ID del curso
+    final userRole = ref.watch(userRoleProvider);
     final asyncCourseContent = ref.watch(courseContentProvider(courseId));
     final colors= Theme.of(context).colorScheme;
+
+    return asyncCourseContent.when(
+    loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+    error: (err, stack) => Scaffold(body: Center(child: Text('Error: $err'))),
+    data: (sections) {
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Contenido del Curso'),
       ),
+      
+      // --- NUEVO: Botón flotante condicionado al rol de profesor ---
+      floatingActionButton: userRole == UserRole.profesor
+          ? FloatingActionButton.extended(
+              onPressed: () {
+                // Aquí navegas a la pantalla de creación
+                // context.push('/crear-actividad/$courseId');
+                _mostrarOpcionesDeActividad(context, ref, courseId, sections);
+              },
+              label: const Text('Nueva Actividad'),
+              icon: const Icon(Icons.add),
+              backgroundColor: Colors.indigo, // Color distintivo para profesor
+            )
+          : null,
       // 3. Usamos .when para manejar los estados de carga
-      body: asyncCourseContent.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
-        data: (sections) {  
-          return ListView.builder(
+      body: RefreshIndicator(
+          onRefresh: () => ref.refresh(courseContentProvider(courseId).future),
+          child: ListView.builder(
             itemCount: sections.length,
             itemBuilder: (context, index) {
               final section = sections[index];
@@ -93,6 +114,7 @@ class Materias extends ConsumerWidget {
                         case 'forum':
                         // El ID del foro se encuentra en la clave 'instance' del módulo
                         final int forumId = module['instance'];
+                        print('DEBUG módulo forum: $module');
                         context.push('/foro/$forumId');
                         break;
                         // Caso por defecto: para cualquier otro tipo de módulo.
@@ -108,14 +130,202 @@ class Materias extends ConsumerWidget {
                 }).toList(),
               );
             },
-          );
-        },
+          ),
       ),
-    );
+     );
+    }
+   );
   }
 }
 
 
+
+void _mostrarOpcionesDeActividad(BuildContext context, WidgetRef ref, int courseId, List sections) {
+  showModalBottomSheet(
+    context: context,
+    builder: (context) {
+      return SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.library_add_outlined, color: Colors.indigo),
+              title: const Text('Añadir Nueva Sección'),
+              onTap: () {
+                Navigator.pop(context);
+                // Ahora estas variables ya son accesibles aquí
+              //  final int lastSectionId = sections.last['id'];
+                final int lastSectionId = int.parse(sections.last['id'].toString());
+                _dialogoNuevaSeccion(
+                  context, 
+                  ref, 
+                  courseId, 
+                  lastSectionId
+                 );
+                },
+              ),
+
+            const Divider(),
+
+            ListTile(
+              leading: const Icon(Icons.assignment, color: Colors.orange),
+              title: const Text('Crear Tarea (Assign)'),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.forum, color: Colors.blue),
+              title: const Text('Crear Foro'),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.link, color: Colors.grey),
+              title: const Text('Añadir Enlace (URL)'),
+              onTap: () => Navigator.pop(context),
+            ),
+            // --- NUEVO: Carpeta (Folder) ---
+            ListTile(
+              leading: const Icon(Icons.folder_copy_sharp, color: Colors.yellow),
+              title: const Text('Añadir Carpeta'),
+              onTap: () {
+                Navigator.pop(context);
+                // Lógica para crear carpeta
+              },
+            ),
+
+            // --- NUEVO: Recurso/Archivo (Resource) ---
+            ListTile(
+              leading: Icon(Icons.archive_sharp, color: Colors.green),
+              title: const Text('Subir Archivo (Recurso)'),
+              onTap: () {
+                Navigator.pop(context);
+                // Lógica para subir archivo
+              },
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+
+
+
+// Nota: Asegúrate de pasar 'ref' y 'sections.length' a esta función
+void _dialogoNuevaSeccion(BuildContext context, WidgetRef ref, int courseId, int lastSectionId) {
+  final TextEditingController sectionController = TextEditingController();
+
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text('Nueva Sección'),
+        content: TextField(
+          controller: sectionController,
+          decoration: const InputDecoration(labelText: 'Nombre de la sección'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          ElevatedButton(
+// En tu función _dialogoNuevaSeccion
+        onPressed: () async {
+        final nombre = sectionController.text;
+        if (nombre.isEmpty) return;
+
+        // 1. Capturar IDs actuales convirtiéndolos a int (Moodle los manda como String)
+        final oldContent = await ref.read(courseContentProvider(courseId).future);
+        final Set<int> oldIds = oldContent.map((s) => int.parse(s['id'].toString())).toSet();
+
+        // 2. Crear la sección
+        final success = await ref.read(courseActionsProvider)
+                                .crearSeccionMoodle(courseId, lastSectionId);
+
+        if (success) {
+          if (context.mounted) Navigator.pop(context); 
+
+          // 3. Refrescar datos
+          ref.invalidate(courseContentProvider(courseId));
+          await Future.delayed(const Duration(milliseconds: 1000));
+          final newContent = await ref.read(courseContentProvider(courseId).future);
+
+          // 4. Identificar el ID nuevo comparando como enteros
+          final newSection = newContent.where((s) {
+            final id = int.parse(s['id'].toString());
+            return !oldIds.contains(id);
+          }).firstOrNull;
+
+          if (newSection != null) {
+            final int newId = int.parse(newSection['id'].toString());
+            print('Renombrando sección detectada con ID: $newId');
+
+            // 5. Llamada final de renombrado
+            await ref.read(courseActionsProvider).editarNombreSeccion(newId, nombre);
+            
+            // Refresco final de la UI
+            ref.invalidate(courseContentProvider(courseId));
+          }
+        }
+      },
+              /*  onPressed: () async {
+          final nombre = sectionController.text;
+          if (nombre.isEmpty) return;
+
+          // A. Guardar IDs actuales para comparar después
+          final oldContent = await ref.read(courseContentProvider(courseId).future);
+          final Set<int> oldIds = oldContent.map((s) => s['id'] as int).toSet();
+
+          // B. Crear sección
+          final success = await ref.read(courseActionsProvider)
+                                  .crearSeccionMoodle(courseId, lastSectionId);
+
+          if (success) {
+            // C. CERRAR EL DIÁLOGO INMEDIATAMENTE
+            if (context.mounted) Navigator.pop(context); 
+
+            // D. Refrescar datos y detectar el ID nuevo
+            ref.invalidate(courseContentProvider(courseId));
+            
+            // Esperamos a que la base de datos de Moodle se actualice
+            await Future.delayed(const Duration(milliseconds: 1000));
+            final newContent = await ref.read(courseContentProvider(courseId).future);
+
+            // E. Encontrar el ID que Moodle acaba de generar (el que no estaba en oldIds)
+            try {
+              final newSection = newContent.firstWhere(
+                (s) => !oldIds.contains(s['id'] as int),
+              );
+              final int newId = newSection['id'];
+
+              // F. Renombrar la sección nueva
+              await ref.read(courseActionsProvider).editarNombreSeccion(newId, nombre);
+              
+              // Refresco final para actualizar la interfaz del profesor
+              ref.invalidate(courseContentProvider(courseId));
+              
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Sección configurada con éxito')),
+                );
+              }
+            } catch (e) {
+              print('No se pudo identificar la sección nueva: $e');
+            }
+          } else {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Error: El servidor no confirmó la creación')),
+              );
+            }
+          }
+        },*/
+            child: const Text('Crear'),
+          ),
+        ],
+      );
+    },
+  );
+}
 
 Widget getModuleIcon(String modname, Color primaryColor) {
   

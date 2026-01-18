@@ -97,7 +97,33 @@ class _BodyLoginState extends ConsumerState<BodyLogin> {
 
         final List<dynamic> userData = json.decode(userResponse.body);
         final int userId = userData[0]['id'];
+      
+      final user = userData[0];
+      final List<dynamic> customFields = user['customfields'] ?? [];
+      String rolMoodle = "estudiante";
 
+      for (var field in customFields) {
+      if (field['shortname'] == 'rolesApp') {
+        // Tomamos el valor y lo limpiamos (por si hay espacios o mayúsculas)
+        rolMoodle = field['value'].toString().trim().toLowerCase();
+        break;
+          }
+        }
+
+      // 3. Mapeo al Enum de tu aplicación
+      switch (rolMoodle) {
+        case 'admin':
+          ref.read(userRoleProvider.notifier).state = UserRole.admin;
+          print("ROL DETECTADO: Administrador");
+          break;
+        case 'profesor':
+          ref.read(userRoleProvider.notifier).state = UserRole.profesor;
+          print("ROL DETECTADO: Profesor");
+          break;
+        default:
+          ref.read(userRoleProvider.notifier).state = UserRole.estudiante;
+          print("ROL DETECTADO: Estudiante");
+      }
         // --- PASO 3: Guardar el token de ADMIN y el ID del USUARIO en Riverpod ---
        // ref.read(authTokenProvider.notifier).state = adminToken;
        ref.read(authTokenProvider.notifier).state = userToken;
@@ -187,7 +213,7 @@ class _BodyLoginState extends ConsumerState<BodyLogin> {
               
               SizedBox(height: 20),
           
-              Text('Password'),
+              Text('Password EDU'),
           
               PasswordLogin(passwordcontroller: _passwordController),
               

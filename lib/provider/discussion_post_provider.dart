@@ -8,9 +8,7 @@ import 'package:http/http.dart' as http;
 final discussionPostsProvider = FutureProvider.family<List<dynamic>, int>((ref, discussionId) async {
   final token = ref.watch(authTokenProvider);
   if (token == null) throw Exception('No autenticado');
-
- // const moodleApiUrl = 'http://172.29.15.191/tesismovil/webservice/rest/server.php';
-  //const moodleApiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php';
+  
   final moodleApiUrl = ref.watch(moodleApiUrlProvider);
 
   final response = await http.post(
@@ -25,9 +23,20 @@ final discussionPostsProvider = FutureProvider.family<List<dynamic>, int>((ref, 
 
   if (response.statusCode == 200) {
     final Map<String, dynamic> data = json.decode(response.body);
+    print('hola');
+    print(response.body);
     // Esta función devuelve un objeto que contiene una lista llamada 'posts'
-    return data['posts'] as List<dynamic>;
+     if (data.containsKey('posts') && data['posts'] != null) {
+      return data['posts'] as List<dynamic>;
+    } else {
+      return []; // devolvemos lista vacía si no hay posts
+    }
   } else {
     throw Exception('Error al cargar los posts de la discusión');
   }
+    
+    /*    return data['posts'] as List<dynamic>;
+      } else {
+        throw Exception('Error al cargar los posts de la discusión');
+      }*/
 });

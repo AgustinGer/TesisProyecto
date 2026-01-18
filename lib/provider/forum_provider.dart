@@ -11,7 +11,6 @@ final forumDiscussionsProvider = FutureProvider.family<List<dynamic>, int>((ref,
   final token = ref.watch(authTokenProvider);
   if (token == null) throw Exception('No autenticado');
 
-  //const moodleApiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php';
   final moodleApiUrl = ref.watch(moodleApiUrlProvider);
   final response = await http.post(
     Uri.parse(moodleApiUrl),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tesis/presentation/widgets/titulos_menu.dart';
+import 'package:flutter_tesis/provider/auth_provider.dart';
 import 'package:flutter_tesis/provider/user_profile.dart';
 import 'package:go_router/go_router.dart';
 
@@ -18,8 +19,27 @@ class _SideMenuState extends ConsumerState<SideMenu> {
   @override
   Widget build(BuildContext context) {
     final asyncProfile = ref.watch(userProfileProvider);
+    final userRole = ref.watch(userRoleProvider);
     final hasNotch= MediaQuery.of(context).viewPadding.top > 35; //cuanto es el pading de top del notch del celular que se este ejecutando
     //si es mayor a 35 tiene un notch grande
+
+      String roleName;
+      Color roleColor;
+
+      switch (userRole) {
+        case UserRole.admin:
+          roleName = 'Administrador';
+          roleColor = Colors.red.shade700;
+          break;
+        case UserRole.profesor:
+          roleName = 'Profesor';
+          roleColor = Colors.indigo;
+          break;
+        case UserRole.estudiante:
+          roleName = 'Estudiante';
+          roleColor = Colors.grey.shade600;
+          break;
+      }
     return NavigationDrawer(
       selectedIndex: navDrawerIndex,
       onDestinationSelected: (value) {
@@ -52,10 +72,25 @@ class _SideMenuState extends ConsumerState<SideMenu> {
                     ),
                     const SizedBox(width: 16),
                     Expanded(
-                      child: Text(
-                        fullName,
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
+                        child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start, // Alinea al inicio
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            fullName,
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          // --- ESTE ES EL NUEVO TEXTO DEL ROL ---
+                          Text(
+                            roleName,
+                            style: TextStyle(
+                              fontSize: 14, 
+                              color: roleColor, 
+                              fontWeight: FontWeight.w500
+                            ),
+                          ),
+                        ],
+                      ),                
                     ),
                 ],
               ),

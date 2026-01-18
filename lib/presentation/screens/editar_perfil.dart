@@ -267,7 +267,14 @@ class _EditarPerfilState extends ConsumerState<EditarPerfil> {
               children: [
                 const Text('Descripción', style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                TextField(controller: _descriptionController, maxLines: 4, decoration: const InputDecoration(border: OutlineInputBorder())),
+                TextField(controller: _descriptionController,
+                maxLines: null ,
+                keyboardType: TextInputType.multiline,
+                textInputAction: TextInputAction.done, 
+                decoration: const InputDecoration(border: OutlineInputBorder()),
+                onSubmitted: (_) {
+                  FocusScope.of(context).unfocus(); // 👈 cierra el teclado
+                },),
                 const SizedBox(height: 24),
                 const Text('Intereses', style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),

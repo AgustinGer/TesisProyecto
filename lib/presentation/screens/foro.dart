@@ -38,8 +38,6 @@ class ForumScreen extends ConsumerWidget {
   }
 }
 
-// Widget para mostrar CADA discusión en la lista
-// Widget para mostrar CADA discusión en la lista
 class _DiscussionPost extends StatelessWidget {
   final Map<String, dynamic> discussion;
   const _DiscussionPost({required this.discussion});
