@@ -235,10 +235,29 @@ void _mostrarOpcionesDeActividad(BuildContext context, WidgetRef ref, int course
             ListTile(
               leading: Icon(Icons.archive_sharp, color: Colors.green),
               title: const Text('Subir Archivo (Recurso)'),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
-                // Lógica para subir archivo
+
+                final sections = await ref.read(courseContentProvider(courseId).future);
+                if (!context.mounted) return;
+
+                final selectedSectionNumber = await seleccionarSeccion(
+                  context,
+                  sections,
+                );
+
+                if (selectedSectionNumber == null) return;
+
+                final moodleBaseUrl = ref.read(moodleBaseUrlProvider);
+
+                await abrirFormularioCrearRecurso(
+                  moodleBaseUrl: moodleBaseUrl,
+                  courseId: courseId,
+                  sectionNumber: selectedSectionNumber,
+                );
               },
+
+
             ),
           ],
         ),
