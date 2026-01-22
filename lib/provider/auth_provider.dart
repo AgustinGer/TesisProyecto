@@ -16,6 +16,10 @@ enum UserRole { estudiante, profesor, admin }
 // Provider para el rol
 final userRoleProvider = StateProvider<UserRole>((ref) => UserRole.estudiante);
 
+final moodleBaseUrlProvider = Provider<String>((ref) {
+  return 'http://192.168.1.45/tesismovil';
+});
+
 final moodleApiUrlProvider = Provider<String>((ref) {
   // Aquí defines la URL base de tu API en un solo lugar.
   // Cámbiala aquí cuando te conectes a otra red.

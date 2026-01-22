@@ -1,4 +1,6 @@
 //import 'package:flutter/cupertino.dart';
+import 'package:flutter_tesis/presentation/profesor_screen/assign.dart';
+import 'package:flutter_tesis/presentation/profesor_screen/url.dart';
 import 'package:flutter_tesis/presentation/screens.dart';
 import 'package:flutter_tesis/presentation/screens/description.dart';
 import 'package:flutter_tesis/presentation/screens/discusion.dart';
@@ -115,6 +117,31 @@ final appRouter = GoRouter(
         return DiscussionDetailScreen(discussionId: discussionId);
       },
     ),
+
+    GoRoute(
+  path: '/crear-tarea/:courseId',
+  builder: (context, state) {
+    // Extraemos el ID del curso de la URL
+    final courseId = int.parse(state.pathParameters['courseId']!);
+    
+    // Extraemos la lista de secciones enviada mediante 'extra'
+    final List sections = state.extra as List;
+    
+    return CrearTareaScreen(
+      courseId: courseId, 
+      sections: sections
+    );
+   },
+  ) ,
+
+  GoRoute(
+    path: '/crear-url/:courseId',
+    builder: (context, state) {
+      final courseId = int.parse(state.pathParameters['courseId']!);
+      final List sections = state.extra as List;
+      return CrearUrlScreen(courseId: courseId, sections: sections);
+    },
+  ),
 
   ],  
 );

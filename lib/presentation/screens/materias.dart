@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_tesis/presentation/moddle_launcher.dart';
 import 'package:flutter_tesis/provider/auth_provider.dart';
 import 'package:flutter_tesis/provider/course_actions_provider.dart';
 //import 'package:flutter_tesis/listas/pruebas/listas_pruebas.dart';
@@ -170,8 +171,19 @@ void _mostrarOpcionesDeActividad(BuildContext context, WidgetRef ref, int course
             ListTile(
               leading: const Icon(Icons.assignment, color: Colors.orange),
               title: const Text('Crear Tarea (Assign)'),
-              onTap: () => Navigator.pop(context),
+              onTap: () {
+                Navigator.pop(context); // Cierra el menú inferior
+                
+                // Navegación con GoRouter
+                // Pasamos el ID en la URL y el objeto complejo (sections) en el extra
+                context.push(
+                  '/crear-tarea/$courseId', 
+                  extra: sections
+                );
+              },     
             ),
+
+
             ListTile(
               leading: const Icon(Icons.forum, color: Colors.blue),
               title: const Text('Crear Foro'),
@@ -180,7 +192,34 @@ void _mostrarOpcionesDeActividad(BuildContext context, WidgetRef ref, int course
             ListTile(
               leading: const Icon(Icons.link, color: Colors.grey),
               title: const Text('Añadir Enlace (URL)'),
-              onTap: () => Navigator.pop(context),
+              onTap: () async {
+                  Navigator.pop(context); // Cierra el menú
+
+                  // 1️⃣ Obtener secciones actuales
+                  if (sections.isEmpty) return;
+
+                  // 2️⃣ Elegir sección
+                  final selectedSectionNumber = await seleccionarSeccion(
+                    context,
+                    sections,
+                  );
+
+                  if (selectedSectionNumber == null) return;
+
+                  // 3️⃣ URL base de Moodle
+                  final moodleBaseUrl = ref.read(moodleBaseUrlProvider);
+
+                  // 4️⃣ Abrir formulario oficial de Moodle
+                  await abrirFormularioCrearUrl(
+                    moodleBaseUrl: moodleBaseUrl,
+                    courseId: courseId,
+                    sectionNumber: selectedSectionNumber,
+                  );
+                },
+              //  onTap: () {
+              //  Navigator.pop(context);
+              //  context.push('/crear-url/$courseId', extra: sections);
+              //}, 
             ),
             // --- NUEVO: Carpeta (Folder) ---
             ListTile(
@@ -208,6 +247,32 @@ void _mostrarOpcionesDeActividad(BuildContext context, WidgetRef ref, int course
   );
 }
 
+
+Future<int?> seleccionarSeccion(
+  BuildContext context,
+  List sections,
+) {
+  return showModalBottomSheet<int>(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (_) {
+      return ListView.builder(
+        itemCount: sections.length,
+        itemBuilder: (context, index) {
+          final sec = sections[index];
+          return ListTile(
+            title: Text(sec['name'] ?? 'Sección sin nombre'),
+            onTap: () {
+              Navigator.pop(context, sec['section']);
+            },
+          );
+        },
+      );
+    },
+  );
+}
 
 
 
