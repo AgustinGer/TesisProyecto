@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tesis/presentation/widgets/titulos_menu.dart';
-import 'package:flutter_tesis/provider/auth_provider.dart';
+//import 'package:flutter_tesis/provider/auth_provider.dart';
 import 'package:flutter_tesis/provider/user_profile.dart';
+//import 'package:flutter_tesis/provider/user_role_provider.dart';
 import 'package:go_router/go_router.dart';
 
 class SideMenu extends ConsumerStatefulWidget{
   final GlobalKey<ScaffoldState> scaffoldKey;
+  //final int courseId;
   const SideMenu({super.key, required this.scaffoldKey});
 
   @override
@@ -19,14 +21,16 @@ class _SideMenuState extends ConsumerState<SideMenu> {
   @override
   Widget build(BuildContext context) {
     final asyncProfile = ref.watch(userProfileProvider);
-    final userRole = ref.watch(userRoleProvider);
+    //final userRole = ref.watch(userRoleProvider);
+    
+   // final userRoleAsync = ref.watch(userRole(courseId));
     final hasNotch= MediaQuery.of(context).viewPadding.top > 35; //cuanto es el pading de top del notch del celular que se este ejecutando
     //si es mayor a 35 tiene un notch grande
 
-      String roleName;
-      Color roleColor;
+      //String roleName;
+      //Color roleColor;
 
-      switch (userRole) {
+      /*switch (userRole) {
         case UserRole.admin:
           roleName = 'Administrador';
           roleColor = Colors.red.shade700;
@@ -39,7 +43,8 @@ class _SideMenuState extends ConsumerState<SideMenu> {
           roleName = 'Estudiante';
           roleColor = Colors.grey.shade600;
           break;
-      }
+      }*/
+
     return NavigationDrawer(
       selectedIndex: navDrawerIndex,
       onDestinationSelected: (value) {
@@ -81,6 +86,47 @@ class _SideMenuState extends ConsumerState<SideMenu> {
                             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           // --- ESTE ES EL NUEVO TEXTO DEL ROL ---
+                          
+                          /*userRoleAsync.when(
+                          loading: () => const Text('Cargando rol...'),
+                          error: (_, __) => const Text('Rol desconocido'),
+                          data: (role) {
+                            String roleName;
+                            Color roleColor;
+
+                            switch (role) {
+                              case 'admin':
+                                roleName = 'Administrador';
+                                roleColor = Colors.red;
+                                break;
+                              case 'manager':
+                                roleName = 'Manager del curso';
+                                roleColor = Colors.deepPurple;
+                                break;
+                              case 'editingteacher':
+                                roleName = 'Profesor (con edición)';
+                                roleColor = Colors.blue;
+                                break;
+                              case 'teacher':
+                                roleName = 'Profesor';
+                                roleColor = Colors.teal;
+                                break;
+                              default:
+                                roleName = 'Estudiante';
+                                roleColor = Colors.grey;
+                            }
+
+                            return Text(
+                              roleName,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: roleColor,
+                                fontWeight: FontWeight.w500,
+                             ),
+                            );
+                           },
+                         ),
+
                           Text(
                             roleName,
                             style: TextStyle(
@@ -88,7 +134,7 @@ class _SideMenuState extends ConsumerState<SideMenu> {
                               color: roleColor, 
                               fontWeight: FontWeight.w500
                             ),
-                          ),
+                          ),*/
                         ],
                       ),                
                     ),

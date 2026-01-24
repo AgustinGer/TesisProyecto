@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_tesis/presentation/moodle_service.dart';
 //import 'package:flutter_tesis/presentation/screens.dart';
 import 'package:flutter_tesis/presentation/shared/email_login.dart';
 import 'package:flutter_tesis/presentation/shared/password_login.dart';
@@ -9,9 +10,6 @@ import 'package:flutter_tesis/provider/auth_provider.dart';
 //import 'package:flutter_tesis/provider/auth_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
-
-//final authTokenProvider = StateProvider<String?>((ref) => null);
-//final userIdProvider = StateProvider<int?>((ref) => null);
 
 // --- Pantalla de Login ---
 
@@ -97,35 +95,17 @@ class _BodyLoginState extends ConsumerState<BodyLogin> {
 
         final List<dynamic> userData = json.decode(userResponse.body);
         final int userId = userData[0]['id'];
-      
-      final user = userData[0];
-      final List<dynamic> customFields = user['customfields'] ?? [];
-      String rolMoodle = "estudiante";
 
-      for (var field in customFields) {
-      if (field['shortname'] == 'rolesApp') {
-        // Tomamos el valor y lo limpiamos (por si hay espacios o mayúsculas)
-        rolMoodle = field['value'].toString().trim().toLowerCase();
-        break;
-          }
-        }
+     //  final apiUrl = ref.read(moodleApiUrlProvider);
 
-      // 3. Mapeo al Enum de tu aplicación
-      switch (rolMoodle) {
-        case 'admin':
-          ref.read(userRoleProvider.notifier).state = UserRole.admin;
-          print("ROL DETECTADO: Administrador");
-          break;
-        case 'profesor':
-          ref.read(userRoleProvider.notifier).state = UserRole.profesor;
-          print("ROL DETECTADO: Profesor");
-          break;
-        default:
-          ref.read(userRoleProvider.notifier).state = UserRole.estudiante;
-          print("ROL DETECTADO: Estudiante");
-      }
+        // 1️⃣ ¿Es Admin?
+        final isAdmin = await checkIsAdmin(
+          apiUrl: apiUrl,
+          token: userToken,
+        );
+
+        ref.read(isAdminProvider.notifier).state = isAdmin;
         // --- PASO 3: Guardar el token de ADMIN y el ID del USUARIO en Riverpod ---
-       // ref.read(authTokenProvider.notifier).state = adminToken;
        ref.read(authTokenProvider.notifier).state = userToken;
        ref.read(userIdProvider.notifier).state = userId;
        ref.read(urlProvider.notifier).state = apiUrl;
@@ -158,6 +138,7 @@ class _BodyLoginState extends ConsumerState<BodyLogin> {
     }
   }
 
+  
 
   @override
   void dispose() {
@@ -181,14 +162,6 @@ class _BodyLoginState extends ConsumerState<BodyLogin> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-          
-          /*Center(
-                child: SizedBox(
-                  child: CircleAvatar(
-                     backgroundImage: NetworkImage('https://kachagain.com/llsif/ur/955.png'),
-                  ),
-                ),
-              ),*/
           
               SizedBox(height: 50),
               

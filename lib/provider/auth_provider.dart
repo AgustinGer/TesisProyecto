@@ -10,12 +10,14 @@ final userIdProvider = StateProvider<int?>((ref) => null);
 //provider de la url
 final urlProvider= StateProvider<String?>((ref) => null);
 
+
 // Definir los roles posibles
-enum UserRole { estudiante, profesor, admin }
+//enum UserRole { estudiante, profesor, admin }
 
 // Provider para el rol
-final userRoleProvider = StateProvider<UserRole>((ref) => UserRole.estudiante);
+//final userRoleProvider = StateProvider<UserRole>((ref) => UserRole.estudiante);
 
+//
 final moodleBaseUrlProvider = Provider<String>((ref) {
   return 'http://192.168.1.45/tesismovil';
 });
@@ -25,3 +27,9 @@ final moodleApiUrlProvider = Provider<String>((ref) {
   // Cámbiala aquí cuando te conectes a otra red.
   return 'http://192.168.1.45/tesismovil/webservice/rest/server.php';
 });
+
+// ¿Es administrador?
+final isAdminProvider = StateProvider<bool>((ref) => false);
+
+// Rol del usuario en el curso actual
+final userCourseRoleProvider = StateProvider<String?>((ref) => null);

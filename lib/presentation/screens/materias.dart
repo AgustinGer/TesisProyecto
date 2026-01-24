@@ -3,12 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tesis/presentation/moddle_launcher.dart';
 import 'package:flutter_tesis/provider/auth_provider.dart';
 import 'package:flutter_tesis/provider/course_actions_provider.dart';
-//import 'package:flutter_tesis/listas/pruebas/listas_pruebas.dart';
 import 'package:flutter_tesis/provider/course_content_provider.dart';
+import 'package:flutter_tesis/provider/user_role_provider.dart';
 import 'package:go_router/go_router.dart';
-//import 'package:go_router/go_router.dart';
-
-// archivo: materias.dart
 
 // 1. El widget ahora es un ConsumerWidget y recibe el courseId
 class Materias extends ConsumerWidget {
@@ -18,7 +15,8 @@ class Materias extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // 2. Observamos el provider, pasándole el ID del curso
-    final userRole = ref.watch(userRoleProvider);
+    //final userRole = ref.watch(userRoleProvider);
+    final userRoleAsync = ref.watch(userRole(courseId));
     final asyncCourseContent = ref.watch(courseContentProvider(courseId));
     final colors= Theme.of(context).colorScheme;
 
@@ -32,19 +30,29 @@ class Materias extends ConsumerWidget {
         title: const Text('Contenido del Curso'),
       ),
       
-      // --- NUEVO: Botón flotante condicionado al rol de profesor ---
-      floatingActionButton: userRole == UserRole.profesor
-          ? FloatingActionButton.extended(
-              onPressed: () {
-                // Aquí navegas a la pantalla de creación
-                // context.push('/crear-actividad/$courseId');
-                _mostrarOpcionesDeActividad(context, ref, courseId, sections);
-              },
-              label: const Text('Nueva Actividad'),
-              icon: const Icon(Icons.add),
-              backgroundColor: Colors.indigo, // Color distintivo para profesor
-            )
-          : null,
+            // --- NUEVO: Botón flotante condicionado al rol de profesor ---
+      floatingActionButton: userRoleAsync.when(
+        loading: () => null,
+        error: (_, __) => null,
+        data: (role) {
+          final bool isProfesor = role == 'admin' ||
+              role == 'manager' ||
+              role == 'editingteacher' ||
+              role == 'teacher';
+
+          if (!isProfesor) return null;
+
+          return FloatingActionButton.extended(
+            onPressed: () {
+              _mostrarOpcionesDeActividad(context, ref, courseId, sections);
+            },
+            label: const Text('Nueva Actividad'),
+            icon: const Icon(Icons.add),
+            backgroundColor: Colors.indigo,
+          );
+        },
+      ),
+
       // 3. Usamos .when para manejar los estados de carga
       body: RefreshIndicator(
           onRefresh: () => ref.refresh(courseContentProvider(courseId).future),
@@ -184,11 +192,12 @@ void _mostrarOpcionesDeActividad(BuildContext context, WidgetRef ref, int course
             ),
 
 
-            ListTile(
+           /* ListTile(
               leading: const Icon(Icons.forum, color: Colors.blue),
               title: const Text('Crear Foro'),
               onTap: () => Navigator.pop(context),
-            ),
+            ),*/
+            
             ListTile(
               leading: const Icon(Icons.link, color: Colors.grey),
               title: const Text('Añadir Enlace (URL)'),
@@ -225,10 +234,29 @@ void _mostrarOpcionesDeActividad(BuildContext context, WidgetRef ref, int course
             ListTile(
               leading: const Icon(Icons.folder_copy_sharp, color: Colors.yellow),
               title: const Text('Añadir Carpeta'),
-              onTap: () {
-                Navigator.pop(context);
-                // Lógica para crear carpeta
+              onTap: () async {
+                final BuildContext currentContext = context;
+                Navigator.pop(currentContext);
+
+                final sections = await ref.read(courseContentProvider(courseId).future);
+                if (sections.isEmpty) return;
+
+                final selectedSectionNumber = await seleccionarSeccion(
+                  currentContext,
+                  sections,
+                );
+
+                if (selectedSectionNumber == null) return;
+
+                final moodleBaseUrl = ref.read(moodleBaseUrlProvider);
+
+                await abrirFormularioCrearCarpeta(
+                  moodleBaseUrl: moodleBaseUrl,
+                  courseId: courseId,
+                  sectionNumber: selectedSectionNumber,
+                );
               },
+
             ),
 
             // --- NUEVO: Recurso/Archivo (Resource) ---
@@ -351,58 +379,7 @@ void _dialogoNuevaSeccion(BuildContext context, WidgetRef ref, int courseId, int
           }
         }
       },
-              /*  onPressed: () async {
-          final nombre = sectionController.text;
-          if (nombre.isEmpty) return;
 
-          // A. Guardar IDs actuales para comparar después
-          final oldContent = await ref.read(courseContentProvider(courseId).future);
-          final Set<int> oldIds = oldContent.map((s) => s['id'] as int).toSet();
-
-          // B. Crear sección
-          final success = await ref.read(courseActionsProvider)
-                                  .crearSeccionMoodle(courseId, lastSectionId);
-
-          if (success) {
-            // C. CERRAR EL DIÁLOGO INMEDIATAMENTE
-            if (context.mounted) Navigator.pop(context); 
-
-            // D. Refrescar datos y detectar el ID nuevo
-            ref.invalidate(courseContentProvider(courseId));
-            
-            // Esperamos a que la base de datos de Moodle se actualice
-            await Future.delayed(const Duration(milliseconds: 1000));
-            final newContent = await ref.read(courseContentProvider(courseId).future);
-
-            // E. Encontrar el ID que Moodle acaba de generar (el que no estaba en oldIds)
-            try {
-              final newSection = newContent.firstWhere(
-                (s) => !oldIds.contains(s['id'] as int),
-              );
-              final int newId = newSection['id'];
-
-              // F. Renombrar la sección nueva
-              await ref.read(courseActionsProvider).editarNombreSeccion(newId, nombre);
-              
-              // Refresco final para actualizar la interfaz del profesor
-              ref.invalidate(courseContentProvider(courseId));
-              
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Sección configurada con éxito')),
-                );
-              }
-            } catch (e) {
-              print('No se pudo identificar la sección nueva: $e');
-            }
-          } else {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Error: El servidor no confirmó la creación')),
-              );
-            }
-          }
-        },*/
             child: const Text('Crear'),
           ),
         ],
@@ -428,185 +405,3 @@ Widget getModuleIcon(String modname, Color primaryColor) {
       return const Icon(Icons.description_outlined);
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*class Materias extends StatelessWidget {
-  const Materias({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-  // final colors= Theme.of(context).colorScheme;
-    return Scaffold(
-      appBar: AppBar(
-      //  backgroundColor: colors.primary,
-        title: Text('Programacion',style: TextStyle(color: Colors.white)),
-        centerTitle: true, 
-        //centrar en ios y android
-      ),
-      body: 
-      NavegacionMaterias()// ListInicio(),
-    );
-  }
-}
-
-class NavegacionMaterias extends StatelessWidget {
-  const NavegacionMaterias({
-    super.key,
-  });
-
-  final int countActividad=0;
-  @override
-  Widget build(BuildContext context) {
-       final colors= Theme.of(context).colorScheme;
-    return SafeArea(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          child: Column( 
-            children: [
-            Image(image: NetworkImage('https://img.freepik.com/vector-premium/logo-nombre-universidad-logo-empresa-llamada-universidad_516670-732.jpg'),height:200, width: double.infinity,fit: BoxFit.cover,), 
-            
-            SizedBox(height: 30),
-            
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                 borderRadius: BorderRadius.circular(5),
-                 border: Border.all(
-                    color: colors.secondary, // Color del borde
-                    width: 1.0,         // Grosor del borde
-               ),
-              ),
-            child:ListTile(
-            leading: Icon(Icons.bookmark_sharp, color: Colors.green),
-            // trailing: Icon(Icons.arrow_forward_ios_rounded, color: colors.primary),
-            title: Text('INFORMACION CURSO'),
-            ),
-          ),
-            
-            SizedBox(height: 30),
-            Text('NO se ha proporcionado informacion del curso actualmente'), 
-            SizedBox(height: 30), 
-        
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                // color: Colors.white,
-                 borderRadius: BorderRadius.circular(5),
-                 border: Border.all(
-                    color: colors.secondary, // Color del borde
-                    width: 1.0,         // Grosor del borde
-               ),
-              ),
-            child:ListTile(
-            leading: Icon(Icons.cases_outlined, color: Colors.blue),
-            title: Text('RECURSOS'),
-            ),                     
-          ),
-        
-              ListTile(
-              leading: Icon(Icons.ios_share  , color: Colors.grey),
-              subtitle: Text('Matrial de apoyo'),
-              onTap: () {
-                context.push('/recursos');
-               },
-              ),  
-            
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                 borderRadius: BorderRadius.circular(5),
-                 border: Border.all(
-                    color: colors.secondary, // Color del borde
-                    width: 1.0,         // Grosor del borde
-               ),
-              ),
-                
-        
-                child:ListTile(
-                leading: Icon(Icons.collections_sharp, color: Colors.red),
-                // trailing: Icon(Icons.arrow_forward_ios_rounded, color: colors.primary),
-                title: Text('ACTIVIDADES'),
-
-                ),                     
-                // chi: Center(child: Text('hola')),
-              ),
-        
-              
-         
-        
-            SizedBox(height: 10), 
-
-          //  Text('actividad 1'),
-
-            Container(
-              decoration: BoxDecoration(
-                border: BorderDirectional(bottom: BorderSide(color: Colors.black,width: 1))
-              ) ,
-              child: ListView.builder(
-               shrinkWrap: true, 
-               itemCount: appMenuItems.length,
-               itemBuilder: (context, index){
-                 return ListTile(
-                  leading: Icon(Icons.description_rounded, color: Colors.yellow),
-                  trailing: Icon(Icons.verified_outlined, color: Colors.green,),
-                  subtitle: Text('Actividad ${index+1}'),
-                  onTap: () {
-                     context.push('/actividades');
-                   },
-                  );               
-               },
-              ),
-            ),
-        
-            Container(
-              //height: 100,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                // color: Colors.white,
-                 borderRadius: BorderRadius.circular(5),
-                 border: Border.all(
-                    color: colors.secondary, // Color del borde
-                    width: 1.0,         // Grosor del borde
-               ),
-              ),
-        
-                child:ListTile(
-                leading: Icon(Icons.video_file, color: Colors.brown),
-                // trailing: Icon(Icons.arrow_forward_ios_rounded, color: colors.primary),
-                title: Text('VIDEOS'),
-                ),                     
-              ),
-        
-              
-
-              ListTile(
-              leading: Icon(Icons.video_call_sharp  , color: Colors.grey),
-              // trailing: Icon(Icons.arrow_forward_ios_rounded, color: colors.primary),
-              subtitle: Text('Videos de apoyo'),
-              onTap: () {
-                context.push('/videos');
-               },
-              ),
-              SizedBox(height: 10),             
-            ],
-          ),
-        ),
-      ));
-  }
-}*/

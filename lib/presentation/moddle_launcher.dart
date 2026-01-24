@@ -45,3 +45,23 @@ Future<void> abrirFormularioCrearRecurso({
 
   await launchMoodleUrl(url);
 }
+
+Future<void> abrirFormularioCrearCarpeta({
+  required String moodleBaseUrl,
+  required int courseId,
+  required int sectionNumber,
+}) async {
+  final uri = Uri.parse(
+    '$moodleBaseUrl/course/modedit.php'
+    '?add=folder'
+    '&course=$courseId'
+    '&section=$sectionNumber',
+  );
+
+  if (!await launchUrl(
+    uri,
+    mode: LaunchMode.externalApplication,
+  )) {
+    throw Exception('No se pudo abrir Moodle para crear carpeta');
+  }
+}
