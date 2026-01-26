@@ -20,6 +20,13 @@ class Materias extends ConsumerWidget {
     final asyncCourseContent = ref.watch(courseContentProvider(courseId));
     final colors= Theme.of(context).colorScheme;
 
+    // Extraemos el valor del rol de forma segura
+    final String currentRole = userRoleAsync.value ?? 'student';
+    final bool isProfesorAsign = currentRole == 'admin' || 
+                          currentRole == 'manager' || 
+                          currentRole == 'editingteacher' || 
+                          currentRole == 'teacher';
+
     return asyncCourseContent.when(
     loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
     error: (err, stack) => Scaffold(body: Center(child: Text('Error: $err'))),
@@ -109,7 +116,16 @@ class Materias extends ConsumerWidget {
                         case 'assign':
                           // El ID de la tarea se encuentra en la clave 'instance' del módulo
                           final int assignmentId = module['instance'];
-                          context.push('/actividades/$courseId/$assignmentId');
+                         //context.push('/actividades/$courseId/$assignmentId');
+                          if (isProfesorAsign) {
+                            // Si es profesor, lo llevamos a la pantalla donde ve las entregas de los alumnos
+                            print('Navegando como Profesor a gestión de tarea: $assignmentId');
+                            context.push('/estudiante-tarea/$courseId/$assignmentId');
+                          } else {
+                            // Si es alumno, va a la pantalla normal de entrega
+                            print('Navegando como Estudiante a entrega de tarea: $assignmentId');
+                            context.push('/actividades/$courseId/$assignmentId');
+                          }                        
                         break;
                         // Caso 3: Es una etiqueta de texto o una página (para la introducción).
                         case 'label':

@@ -1,7 +1,9 @@
 //import 'package:flutter/cupertino.dart';
 //import 'package:flutter_tesis/presentation/profesor_screen/assign.dart';
+import 'package:flutter_tesis/presentation/profesor_screen/calificar_tarea.dart';
 import 'package:flutter_tesis/presentation/profesor_screen/crear_tarea_screen.dart';
 import 'package:flutter_tesis/presentation/profesor_screen/url.dart';
+import 'package:flutter_tesis/presentation/profesor_screen/estudiante_tarea.dart';
 import 'package:flutter_tesis/presentation/screens.dart';
 import 'package:flutter_tesis/presentation/screens/description.dart';
 import 'package:flutter_tesis/presentation/screens/discusion.dart';
@@ -143,6 +145,33 @@ final appRouter = GoRouter(
       return CrearUrlScreen(courseId: courseId, sections: sections);
     },
   ),
+
+  GoRoute(
+  path: '/estudiante-tarea/:courseId/:assignId',
+  builder: (context, state) {
+    final courseId = int.parse(state.pathParameters['courseId']!);
+    final assignId = int.parse(state.pathParameters['assignId']!);
+    // Aquí retornarás tu nuevo widget para el profesor
+    return EstudianteTareaScreen(courseId: courseId, assignId: assignId);
+  },
+),
+
+GoRoute(
+  path: '/calificar-tarea/:courseId/:assignId/:userId',
+  builder: (context, state) {
+    final courseId = int.parse(state.pathParameters['courseId']!);
+    final assignId = int.parse(state.pathParameters['assignId']!);
+    final userId = int.parse(state.pathParameters['userId']!);
+    final String studentName = state.extra as String;
+
+    return PantallaCalificar(
+      courseId: courseId, 
+      assignId: assignId, 
+      userId: userId,
+      studentName: studentName,
+    );
+  },
+),
 
   GoRoute(
   path: '/crear-tarea/:courseId',
