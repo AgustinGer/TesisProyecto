@@ -8,17 +8,30 @@ final submissionDetailsProvider = FutureProvider.family<Map<String, dynamic>, ({
   final apiUrl = ref.read(moodleApiUrlProvider);
   final token = ref.read(authTokenProvider)!;
 
-  final response = await http.post(Uri.parse(apiUrl), body: {
-    'wstoken': token,
-    'wsfunction': 'mod_assign_get_submission_status',
-    'moodlewsrestformat': 'json',
-    'assignid': arg.assignId.toString(),
-    'userid': arg.userId.toString(),
-  });
+  try {
+    print('--- [DEBUG CALIFICAR] Consultando Tarea: ${arg.assignId} para Usuario: ${arg.userId} ---');
 
-  final data = json.decode(response.body);
-  if (data is Map && data.containsKey('exception')) throw Exception(data['message']);
-  return data;
+    final response = await http.post(Uri.parse(apiUrl), body: {
+      'wstoken': token,
+      'wsfunction': 'mod_assign_get_submission_status',
+      'moodlewsrestformat': 'json',
+      'assignid': arg.assignId.toString(),
+      'userid': arg.userId.toString(),
+    });
+
+    print('--- [DEBUG CALIFICAR] Respuesta: ${response.body} ---');
+
+    final data = json.decode(response.body);
+    
+    if (data is Map && data.containsKey('exception')) {
+      throw Exception('Moodle dice: ${data['message']}');
+    }
+    
+    return data;
+  } catch (e) {
+    print('Error crítico en submissionDetailsProvider: $e');
+    rethrow;
+  }
 });
 
 // Clase para las acciones de calificar

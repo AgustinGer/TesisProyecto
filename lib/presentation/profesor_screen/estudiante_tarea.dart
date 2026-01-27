@@ -47,7 +47,12 @@ Widget build(BuildContext context, WidgetRef ref) {
               ),
               onTap: () {
                 // Navegación a la pantalla de calificar
-                context.push('/calificar-tarea/${student['id']}', extra: student['fullname']);
+              print('Navegando a calificar: Curso $courseId, Tarea $assignId, Estudiante ${student['id']}');
+                
+                context.push(
+                  '/calificar-tarea/$courseId/$assignId/${student['id']}',
+                  extra: student['fullname']
+                );
               },
             );
           },

@@ -156,23 +156,25 @@ final appRouter = GoRouter(
   },
 ),
 
-GoRoute(
-  path: '/calificar-tarea/:courseId/:assignId/:userId',
-  builder: (context, state) {
-    final courseId = int.parse(state.pathParameters['courseId']!);
-    final assignId = int.parse(state.pathParameters['assignId']!);
-    final userId = int.parse(state.pathParameters['userId']!);
-    final String studentName = state.extra as String;
+  GoRoute(
+    path: '/calificar-tarea/:courseId/:assignId/:userId',
+    builder: (context, state) {
+      final courseId = int.parse(state.pathParameters['courseId']!);
+      final assignId = int.parse(state.pathParameters['assignId']!);
+      final userId = int.parse(state.pathParameters['userId']!);
+      
+      // Si extra es nulo, ponemos un texto genérico para que no explote
+      final String studentName = (state.extra as String?) ?? 'Estudiante';
 
-    return PantallaCalificar(
-      courseId: courseId, 
-      assignId: assignId, 
-      userId: userId,
-      studentName: studentName,
-    );
-  },
-),
-
+      return PantallaCalificar(
+        courseId: courseId, 
+        assignId: assignId, 
+        userId: userId,
+        studentName: studentName,
+      );
+    },
+  ),
+  
   GoRoute(
   path: '/crear-tarea/:courseId',
   builder: (context, state) {
