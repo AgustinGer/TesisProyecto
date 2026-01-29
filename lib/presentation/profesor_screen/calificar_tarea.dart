@@ -30,6 +30,7 @@ class PantallaCalificar extends ConsumerStatefulWidget {
 
 class _PantallaCalificarState extends ConsumerState<PantallaCalificar> {
   final _gradeController = TextEditingController();
+  final _feedbackController = TextEditingController();
   final Map<String, double> _downloadProgress = {};
 
   // --- LÓGICA DE PERMISOS (Igual a RecursosScreen) ---
@@ -40,6 +41,12 @@ class _PantallaCalificarState extends ConsumerState<PantallaCalificar> {
     return await Permission.manageExternalStorage.request().isGranted;
   }
 
+  @override
+    void dispose() {
+      _gradeController.dispose();
+      _feedbackController.dispose(); // No olvides liberarlo
+      super.dispose();
+    }
   // --- INICIAR DESCARGA ---
   Future<void> _startDownload(String fileUrl, String filename) async {
     final granted = await _requestStoragePermission();
@@ -181,7 +188,24 @@ class _PantallaCalificarState extends ConsumerState<PantallaCalificar> {
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(border: OutlineInputBorder(), hintText: 'Ej: 90'),
                 ),
+
                 const SizedBox(height: 30),
+
+// NUEVO: CAMPO DE RETROALIMENTACIÓN (OPCIONAL)
+                const Text('Retroalimentación (Opcional)', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _feedbackController,
+                  maxLines: 3, // Para que sea un cuadro de texto más grande
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: 'Escribe un comentario para el estudiante...',
+                    prefixIcon: Icon(Icons.comment_outlined),
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -236,15 +260,34 @@ Widget _buildInfoCard(String label, String value, Color color) {
       return;
     }
 
+// Mostramos cargando
+    showDialog(context: context, builder: (c) => const Center(child: CircularProgressIndicator()));
+
+   /* final success = await ref.read(gradeActionsProvider).guardarNota(
+      assignId: widget.assignId,
+      userId: widget.userId,
+      nota: nota,
+    );*/
+
     final success = await ref.read(gradeActionsProvider).guardarNota(
       assignId: widget.assignId,
       userId: widget.userId,
       nota: nota,
+      feedback: _feedbackController.text, // Enviamos el texto del nuevo controlador
     );
 
-    if (context.mounted && success) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('¡Nota guardada!'), backgroundColor: Colors.green));
-      context.pop();
+      if (context.mounted) {
+      Navigator.pop(context); // Quitar loading
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('¡Evaluación guardada!'), backgroundColor: Colors.green)
+        );
+        context.pop();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error al guardar en Moodle'), backgroundColor: Colors.red)
+        );
+      }
     }
   }
 }

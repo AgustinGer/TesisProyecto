@@ -45,27 +45,41 @@ class GradeActions {
     required int assignId,
     required int userId,
     required double nota,
+    String? feedback, // Nuevo parámetro opcional
   }) async {
     final apiUrl = ref.read(moodleApiUrlProvider);
     final token = ref.read(authTokenProvider)!;
 
     try {
-      final response = await http.post(Uri.parse(apiUrl), body: {
+      // Preparamos el cuerpo básico
+      final Map<String, String> body = {
         'wstoken': token,
         'wsfunction': 'mod_assign_save_grade',
         'moodlewsrestformat': 'json',
         'assignmentid': assignId.toString(),
         'userid': userId.toString(),
         'grade': nota.toString(),
-        'attemptnumber': "-1", // Último intento
+        'attemptnumber': "-1",
         'addattempt': "0",
         'workflowstate': "graded",
         'applytoall': "0",
-      });
+      };
+
+      // Si hay feedback, lo añadimos siguiendo el formato de Moodle
+      if (feedback != null && feedback.trim().isNotEmpty) {
+        body['plugindata[assignfeedbackcomments_editor][text]'] = feedback;
+        body['plugindata[assignfeedbackcomments_editor][format]'] = "1"; // Formato HTML/Texto
+      }
+
+      final response = await http.post(Uri.parse(apiUrl), body: body);
+      print('Respuesta Calificación: ${response.body}');
 
       return !response.body.contains('exception');
     } catch (e) {
+      print('Error al guardar nota: $e');
       return false;
     }
   }
+
+
 }
