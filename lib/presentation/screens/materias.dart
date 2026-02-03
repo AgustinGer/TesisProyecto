@@ -35,6 +35,17 @@ class Materias extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Contenido del Curso'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.chat_outlined),
+            tooltip: 'Mensajes',
+            onPressed: () {
+              // Navegamos a la pantalla de mensajes
+              context.push('/mensajes');
+            },
+          ),
+          const SizedBox(width: 8), // Un pequeño espacio al final
+        ],
       ),
       
             // --- NUEVO: Botón flotante condicionado al rol de profesor ---
@@ -76,6 +87,22 @@ class Materias extends ConsumerWidget {
                   return ListTile(
                     leading: getModuleIcon(modname, colors.primary),// Lógica de iconos
                     title: Text(moduleName),
+               /*     trailing: isProfesorAsign
+                         ? IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.indigo),
+                          onPressed: () {
+                            // Extraemos los datos necesarios para la edición
+                            final int moduleId = int.parse(module['id'].toString());
+                            final String modType = module['modname'] ?? '';
+                            
+                            print('Editando módulo ID: $moduleId tipo: $modType');
+                            
+                            // Navegamos a la pantalla de edición pasándole el ID y el tipo
+                            // Puedes usar rutas de GoRouter según lo tengas configurado
+                            context.push('/editar-modulo/$courseId/$moduleId', extra: module);
+                          },
+                        )
+                      : null,*/
                     onTap: () {
                       // Obtenemos el tipo de módulo, por ejemplo: 'folder', 'url', 'label', 'resource'.
                       final String modname = module['modname'] ?? '';
@@ -107,6 +134,7 @@ class Materias extends ConsumerWidget {
                               // Asegúrate de tener la lógica para añadir el token.
                               // _downloadFile(ref, videoUrl); // Reutilizando la función de descarga
                               print('Navegar a video: $videoUrl');
+                             // final int moduleId = int.parse(module['id'].toString());
                               context.push('/videos', extra: {'title': module['name'], 'url': videoUrl});
                             }
                           }

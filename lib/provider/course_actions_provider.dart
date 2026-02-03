@@ -110,6 +110,91 @@ Future<bool> editarNombreSeccion(int sectionId, String nuevoNombre) async {
     return false;
   }
 }
+
+// Dentro de tu clase CourseActions
+Future<bool> editarUrlMoodle({
+  required int moduleId, 
+  required String nuevoNombre, 
+  required String nuevaUrl
+}) async {
+  final token = ref.read(authTokenProvider);
+  final apiUrl = ref.read(moodleApiUrlProvider);
+
+  try {
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      body: {
+        'wstoken': token,
+        'wsfunction': 'core_course_edit_module', // Función estándar para editar módulos
+        'moodlewsrestformat': 'json',
+        'id': moduleId.toString(),
+        'action': 'edit',
+        'name': nuevoNombre,
+        // Para el caso de URL, Moodle suele requerir campos específicos del plugin
+        // Si 'core_course_edit_module' no te permite cambiar la URL directamente, 
+        // se usa 'mod_url_update_url' (depende de los permisos de tu token).
+      },
+    );
+
+    final data = json.decode(response.body);
+    
+    if (data is Map && data.containsKey('exception')) {
+      print('Error Moodle: ${data['message']}');
+      return false;
+    }
+
+    return true; // Éxito
+  } catch (e) {
+    print('Error de red: $e');
+    return false;
+  }
+ }
+
+
+ Future<bool> enviarMensaje({required int userIdTo, required String texto}) async {
+  final token = ref.read(authTokenProvider);
+  final apiUrl = ref.read(moodleApiUrlProvider);
+
+  print('--- INTENTANDO ENVIAR MENSAJE ---');
+  print('Para UserID: $userIdTo | Texto: $texto');
+
+  try {
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      body: {
+        'wstoken': token,
+        'wsfunction': 'core_message_send_instant_messages',
+        'moodlewsrestformat': 'json',
+        // Estructura obligatoria de Moodle para arreglos:
+        'messages[0][touserid]': userIdTo.toString(),
+        'messages[0][text]': texto,
+        'messages[0][textformat]': '1', // 1 = HTML, suele ser el más compatible
+      },
+    );
+
+    print('Respuesta Enviar Mensaje (Status): ${response.statusCode}');
+    print('Cuerpo Respuesta Enviar: ${response.body}');
+
+    final data = json.decode(response.body);
+
+    if (data is List && data.isNotEmpty) {
+      // Moodle devuelve una lista de mensajes enviados si tiene éxito
+      if (data[0].containsKey('msgid')) {
+        print('✅ Mensaje enviado con éxito. ID: ${data[0]['msgid']}');
+        return true;
+      }
+    }
+    
+    if (data is Map && data.containsKey('exception')) {
+      print('Error Moodle al enviar: ${data['message']}');
+    }
+
+    return false;
+  } catch (e) {
+    print(' Error de red al enviar: $e');
+    return false;
+  }
+}
  
 }
 

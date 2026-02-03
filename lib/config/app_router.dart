@@ -5,9 +5,11 @@ import 'package:flutter_tesis/presentation/profesor_screen/crear_tarea_screen.da
 import 'package:flutter_tesis/presentation/profesor_screen/url.dart';
 import 'package:flutter_tesis/presentation/profesor_screen/estudiante_tarea.dart';
 import 'package:flutter_tesis/presentation/screens.dart';
+import 'package:flutter_tesis/presentation/screens/chat.dart';
 import 'package:flutter_tesis/presentation/screens/description.dart';
 import 'package:flutter_tesis/presentation/screens/discusion.dart';
 import 'package:flutter_tesis/presentation/screens/foro.dart';
+import 'package:flutter_tesis/presentation/screens/mensajes.dart';
 import 'package:go_router/go_router.dart';
 
 
@@ -86,6 +88,24 @@ final appRouter = GoRouter(
         // Devuelve la pantalla que mostrará el video
         return VideoScreen(videoTitle: title, videoUrl: url);
       },
+    ),
+
+    GoRoute(
+        path: '/mensajes',
+        builder: (context, state) => const MensajesScreen(),
+    ),
+
+      // RUTA ADICIONAL: Para el detalle de un chat específico
+    GoRoute(
+        path: '/chat-detalle',
+        builder: (context, state) {
+          final params = state.extra as Map<String, dynamic>;
+          return ChatDetalleScreen(
+            conversationId: params['conversationId'],
+            userName: params['userName'],
+            userIdTo: params['userIdTo'],
+          );
+       },
     ),
 
     GoRoute(
