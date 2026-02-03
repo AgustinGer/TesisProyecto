@@ -195,6 +195,28 @@ Future<bool> editarUrlMoodle({
     return false;
   }
 }
+
+    Future<void> marcarComoLeido({required int conversationId}) async {
+      final token = ref.read(authTokenProvider);
+      final userId = ref.read(userIdProvider);
+      final apiUrl = ref.read(moodleApiUrlProvider);
+
+      try {
+        final response = await http.post(
+          Uri.parse(apiUrl),
+          body: {
+            'wstoken': token,
+            'wsfunction': 'core_message_mark_all_conversation_messages_as_read',
+            'moodlewsrestformat': 'json',
+            'userid': userId.toString(),
+            'conversationid': conversationId.toString(),
+          },
+        );
+        print('DEBUG: Mensajes marcados como leídos: ${response.body}');
+      } catch (e) {
+        print('Error al marcar como leído: $e');
+      }
+    }
  
 }
 

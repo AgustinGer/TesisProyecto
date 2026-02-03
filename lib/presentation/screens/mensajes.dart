@@ -24,6 +24,55 @@ class MensajesScreen extends ConsumerWidget {
               
               return ListTile(
                 leading: CircleAvatar(
+                  backgroundColor: Colors.indigo.withOpacity(0.1),
+                  child: Text(member['fullname'][0], style: const TextStyle(color: Colors.indigo)),
+                ),
+                title: Text(member['fullname'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                
+                // --- CAMBIO EN EL SUBTÍTULO ---
+                subtitle: Text(
+                  (chat['unreadcount'] != null && chat['unreadcount'] > 0)
+                      ? '📩 Mensaje pendiente'
+                      : (chat['messages'].isNotEmpty ? 'Ver conversación' : 'Sin mensajes'),
+                  style: TextStyle(
+                    color: (chat['unreadcount'] != null && chat['unreadcount'] > 0) 
+                        ? Colors.green.shade700 
+                        : Colors.grey.shade600,
+                    fontWeight: (chat['unreadcount'] != null && chat['unreadcount'] > 0) 
+                        ? FontWeight.bold 
+                        : FontWeight.normal,
+                  ),
+                ),
+                
+                // --- INDICADOR VISUAL EXTRA ---
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (chat['unreadcount'] != null && chat['unreadcount'] > 0)
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
+                        child: Text(
+                          '${chat['unreadcount']}',
+                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+                  ],
+                ),
+                
+                onTap: () async {
+                  context.push('/chat-detalle', extra: {
+                    'conversationId': chat['id'],
+                    'userName': member['fullname'],
+                    'userIdTo': member['id'],
+                  });
+                  ref.invalidate(conversationsProvider);
+                },
+              );
+              /*return ListTile(
+                leading: CircleAvatar(
                   backgroundImage: NetworkImage(member['profileurl'] ?? ''),
                 ),
                 title: Text(member['fullname']),
@@ -39,7 +88,7 @@ class MensajesScreen extends ConsumerWidget {
                     'userIdTo': member['id'],
                   });
                 },
-              );
+              );*/
             },
           );
         },

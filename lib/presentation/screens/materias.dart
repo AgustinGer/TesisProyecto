@@ -36,8 +36,11 @@ class Materias extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Contenido del Curso'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.chat_outlined),
+          IconButton(           
+            icon: const Icon(
+              Icons.chat_outlined,
+              color: Colors.white,
+            ),
             tooltip: 'Mensajes',
             onPressed: () {
               // Navegamos a la pantalla de mensajes

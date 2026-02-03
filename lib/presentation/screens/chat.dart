@@ -4,6 +4,7 @@ import 'package:flutter_tesis/provider/auth_provider.dart';
 import 'package:flutter_tesis/provider/course_actions_provider.dart';
 //import 'package:flutter_tesis/provider/course_actions_provider.dart';
 import 'package:flutter_tesis/provider/message_provider.dart';
+import 'dart:async';
 
 class ChatDetalleScreen extends ConsumerStatefulWidget {
   final int conversationId;
@@ -24,9 +25,25 @@ class ChatDetalleScreen extends ConsumerStatefulWidget {
 class _ChatDetalleScreenState extends ConsumerState<ChatDetalleScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController(); // Añadido para el scroll
+  Timer? _pollingTimer;
+
+  
+    @override
+    void initState() {
+      super.initState();
+      
+      // Marcamos como leído apenas entramos a la pantalla
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(courseActionsProvider).marcarComoLeido(
+          conversationId: widget.conversationId
+        );
+      });
+      _iniciarActualizacionAutomatica();
+    }
 
   @override
   void dispose() {
+    _pollingTimer?.cancel();
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -50,7 +67,7 @@ class _ChatDetalleScreenState extends ConsumerState<ChatDetalleScreen> {
       ref.invalidate(chatMessagesProvider(widget.conversationId));
       
       // Animamos el scroll hacia el nuevo mensaje (posición 0 porque es reverse: true)
-      Future.delayed(const Duration(milliseconds: 500), () {
+      Future.delayed(const Duration(milliseconds: 300), () {
         if (_scrollController.hasClients) {
           _scrollController.animateTo(
             0, 
@@ -64,6 +81,16 @@ class _ChatDetalleScreenState extends ConsumerState<ChatDetalleScreen> {
         const SnackBar(content: Text('No se pudo enviar el mensaje')),
       );
     }
+  }
+
+void _iniciarActualizacionAutomatica() {
+    // En una institución, 10-15 segundos es un equilibrio sano entre "tiempo real" y "carga del servidor"
+    _pollingTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (mounted) {
+        // Refrescamos silenciosamente el provider
+        ref.invalidate(chatMessagesProvider(widget.conversationId));
+      }
+    });
   }
 
   @override
