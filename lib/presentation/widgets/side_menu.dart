@@ -30,21 +30,6 @@ class _SideMenuState extends ConsumerState<SideMenu> {
       //String roleName;
       //Color roleColor;
 
-      /*switch (userRole) {
-        case UserRole.admin:
-          roleName = 'Administrador';
-          roleColor = Colors.red.shade700;
-          break;
-        case UserRole.profesor:
-          roleName = 'Profesor';
-          roleColor = Colors.indigo;
-          break;
-        case UserRole.estudiante:
-          roleName = 'Estudiante';
-          roleColor = Colors.grey.shade600;
-          break;
-      }*/
-
     return NavigationDrawer(
       selectedIndex: navDrawerIndex,
       onDestinationSelected: (value) {
@@ -86,55 +71,6 @@ class _SideMenuState extends ConsumerState<SideMenu> {
                             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           // --- ESTE ES EL NUEVO TEXTO DEL ROL ---
-                          
-                          /*userRoleAsync.when(
-                          loading: () => const Text('Cargando rol...'),
-                          error: (_, __) => const Text('Rol desconocido'),
-                          data: (role) {
-                            String roleName;
-                            Color roleColor;
-
-                            switch (role) {
-                              case 'admin':
-                                roleName = 'Administrador';
-                                roleColor = Colors.red;
-                                break;
-                              case 'manager':
-                                roleName = 'Manager del curso';
-                                roleColor = Colors.deepPurple;
-                                break;
-                              case 'editingteacher':
-                                roleName = 'Profesor (con edición)';
-                                roleColor = Colors.blue;
-                                break;
-                              case 'teacher':
-                                roleName = 'Profesor';
-                                roleColor = Colors.teal;
-                                break;
-                              default:
-                                roleName = 'Estudiante';
-                                roleColor = Colors.grey;
-                            }
-
-                            return Text(
-                              roleName,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: roleColor,
-                                fontWeight: FontWeight.w500,
-                             ),
-                            );
-                           },
-                         ),
-
-                          Text(
-                            roleName,
-                            style: TextStyle(
-                              fontSize: 14, 
-                              color: roleColor, 
-                              fontWeight: FontWeight.w500
-                            ),
-                          ),*/
                         ],
                       ),                
                     ),
@@ -175,13 +111,6 @@ class _SideMenuState extends ConsumerState<SideMenu> {
           label: Text(item.tituloMenu),
          ),
         ),
-
-        
-     /*   NavigationDrawerDestination(
-          icon: const Icon(Icons.add), 
-          label: const Text('otra pantalla')
-        ),*/
-        
       ]);
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter_tesis/presentation/moddle_launcher.dart';
 import 'package:flutter_tesis/provider/auth_provider.dart';
 import 'package:flutter_tesis/provider/course_actions_provider.dart';
 import 'package:flutter_tesis/provider/course_content_provider.dart';
+import 'package:flutter_tesis/provider/user_profile.dart';
 import 'package:flutter_tesis/provider/user_role_provider.dart';
 import 'package:go_router/go_router.dart';
 
@@ -18,7 +19,11 @@ class Materias extends ConsumerWidget {
     //final userRole = ref.watch(userRoleProvider);
     final userRoleAsync = ref.watch(userRole(courseId));
     final asyncCourseContent = ref.watch(courseContentProvider(courseId));
+    final userProfileAsync = ref.watch(userProfileProvider);
+
+
     final colors= Theme.of(context).colorScheme;
+    final hasNotch = MediaQuery.of(context).viewPadding.top > 35;
 
     // Extraemos el valor del rol de forma segura
     final String currentRole = userRoleAsync.value ?? 'student';
@@ -31,12 +36,15 @@ class Materias extends ConsumerWidget {
     loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
     error: (err, stack) => Scaffold(body: Center(child: Text('Error: $err'))),
     data: (sections) {
+      // Moodle devuelve 'fullname' y 'profileimageurl' en esta función
+        final String studentName = userProfileAsync.value?['fullname'] ?? 'Cargando...';
+        final String studentProfileUrl = userProfileAsync.value?['profileimageurl'] ?? '';
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Contenido del Curso'),
         actions: [
-          IconButton(           
+     /*     IconButton(           
             icon: const Icon(
               Icons.chat_outlined,
               color: Colors.white,
@@ -47,10 +55,178 @@ class Materias extends ConsumerWidget {
               context.push('/mensajes');
             },
           ),
+
+          IconButton(
+            icon: const Icon(Icons.assessment_outlined, color: Colors.white), // O Icons.grade_outlined
+            tooltip: 'Ver mis notas',
+            onPressed: () {
+              // Navegamos a la pantalla de notas pasando el ID del curso
+              context.push('/mis-notas/$courseId');
+            },
+          ),*/
+
+            Builder(
+                builder: (context) => GestureDetector(
+                  onTap: () => Scaffold.of(context).openEndDrawer(),
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 12, left: 8),
+                    child: CircleAvatar(
+                      radius: 16, // Tamaño pequeño para el AppBar
+                      backgroundColor: Colors.indigo.shade300,
+                      backgroundImage: studentProfileUrl.isNotEmpty 
+                          ? NetworkImage(studentProfileUrl) 
+                          : null,
+                      child: studentProfileUrl.isEmpty 
+                          ? const Icon(Icons.person, size: 20, color: Colors.white) 
+                          : null,
+                    ),
+                  ),
+                ),
+              ),
           const SizedBox(width: 8), // Un pequeño espacio al final
         ],
       ),
       
+     endDrawer: Drawer(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                // 1. Espacio para el Notch (SafeArea manual)
+                SizedBox(height: hasNotch ? 50 : 20),
+
+                // 2. TU CABECERA PERSONALIZADA (Row con Avatar y Texto)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 30,
+                        backgroundColor: colors.primaryContainer,
+                        backgroundImage: studentProfileUrl.isNotEmpty
+                            ? NetworkImage(studentProfileUrl)
+                            : null,
+                        child: studentProfileUrl.isEmpty
+                            ? const Icon(Icons.person, size: 30, color: Colors.grey)
+                            : null,
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              studentName,
+                              style: const TextStyle(
+                                fontSize: 18, 
+                                fontWeight: FontWeight.bold,
+                               // color: colors.onSurface
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+
+                            userRoleAsync.when(
+                              data: (roleRaw) {
+                                // 1. Lógica del switch para traducir el rol
+                                String roleDisplay;
+                                switch (roleRaw) {
+                                  case 'editingteacher':
+                                  case 'teacher':
+                                    roleDisplay = 'Profesor';
+                                    break;
+                                  case 'manager':
+                                  case 'coursecreator':
+                                    roleDisplay = 'Gestor';
+                                    break;
+                                  case 'admin':
+                                    roleDisplay = 'Administrador';
+                                    break;
+                                  default:
+                                    roleDisplay = 'Estudiante';
+                                }
+
+                                // 2. Retornamos el widget usando el texto traducido
+                                return Text(
+                                  roleDisplay, 
+                                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                );
+                              },
+                              loading: () => const Text(
+                                '...', 
+                                style: TextStyle(fontSize: 12, color: Colors.grey),
+                              ),
+                              error: (_, __) => const Text(
+                                'Estudiante', 
+                                style: TextStyle(fontSize: 12, color: Colors.grey),
+                              ),
+                            ),
+                           /* Text(
+                              currentRole,
+                              //"Estudiante", // O el rol dinámico si lo tienes
+                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                            ),*/
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 3. DIVIDER
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(28, 10, 16, 10),
+                  child: Divider(),
+                ),
+
+                // 4. SECCIÓN "DEL CURSO" (Equivalente a tu "Main")
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(28, 10, 16, 10),
+                  child: Text('Acciones del Curso', style: TextStyle(color: Colors.grey)),
+                ),
+
+                // Ítems del menú con estilo NavigationDrawerDestination
+                _buildDrawerItem(
+                  context: context,
+                  icon: Icons.assignment_turned_in,
+                  text: 'Mis Calificaciones',
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push('/mis-notas/$courseId');
+                  },
+                ),
+                _buildDrawerItem(
+                  context: context,
+                  icon: Icons.chat_bubble,
+                  text: 'Mensajería',
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push('/mensajes');
+                  },
+                ),
+
+                // 5. SECCIÓN "OPCIONES" (Equivalente a tu "More options")
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(28, 10, 16, 10),
+                  child: Divider(),
+                ),
+                 const Padding(
+                  padding: EdgeInsets.fromLTRB(28, 10, 16, 10),
+                  child: Text('Opciones', style: TextStyle(color: Colors.grey)),
+                ),
+
+                _buildDrawerItem(
+                  context: context,
+                  icon: Icons.logout,
+                  text: 'Cerrar Sesión',
+                  textColor: Colors.red,
+                  iconColor: Colors.red,
+                  onTap: () {
+                    // Tu lógica de logout
+                  },
+                ),
+              ],
+            ),
+          ),
             // --- NUEVO: Botón flotante condicionado al rol de profesor ---
       floatingActionButton: userRoleAsync.when(
         loading: () => null,
@@ -451,4 +627,26 @@ Widget getModuleIcon(String modname, Color primaryColor) {
     default:
       return const Icon(Icons.description_outlined);
   }
+  
 }
+
+Widget _buildDrawerItem({
+    required IconData icon, 
+    required String text, 
+    required VoidCallback onTap,
+    required BuildContext context,
+    Color? textColor,
+    Color? iconColor,
+  }) {
+
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: ListTile(
+        leading: Icon(icon, color: iconColor ?? colors.onSurface),
+        title: Text(text, style: TextStyle(color: textColor ?? colors.onSurface)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)), // Forma redondeada Material 3
+        onTap: onTap,
+      ),
+    );
+  }

@@ -21,10 +21,14 @@ class MensajesScreen extends ConsumerWidget {
             itemBuilder: (context, index) {
               final chat = conversations[index];
               final member = chat['members'][0]; // El otro usuario
+              final String profileUrl = member['profileimageurl'] ?? '';
               
               return ListTile(
                 leading: CircleAvatar(
                   backgroundColor: Colors.indigo.withOpacity(0.1),
+                  backgroundImage: profileUrl.isNotEmpty 
+                    ? NetworkImage(profileUrl) 
+                    : null,
                   child: Text(member['fullname'][0], style: const TextStyle(color: Colors.indigo)),
                 ),
                 title: Text(member['fullname'], style: const TextStyle(fontWeight: FontWeight.bold)),
