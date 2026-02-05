@@ -4,12 +4,14 @@ import 'package:flutter_tesis/provider/notas_provider.dart';
 
 class MisNotasScreen extends ConsumerWidget {
   final int courseId;
-  const MisNotasScreen({super.key, required this.courseId});
+  final int? userId; //opcional
+  const MisNotasScreen({super.key, required this.courseId, this.userId,});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // USAMOS EL NUEVO PROVIDER
-    final gradesAsync = ref.watch(courseGradesProvider(courseId));
+   // final gradesAsync = ref.watch(courseGradesProvider(courseId));
+    final gradesAsync = ref.watch(courseGradesProvider((courseId: courseId, userId: userId)),);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Mis Calificaciones')),

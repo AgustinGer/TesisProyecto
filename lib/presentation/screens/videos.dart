@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_tesis/provider/course_actions_provider.dart';
-import 'package:flutter_tesis/provider/course_content_provider.dart';
+//import 'package:flutter_riverpod/flutter_riverpod.dart';
+//import 'package:flutter_tesis/provider/course_actions_provider.dart';
+//import 'package:flutter_tesis/provider/course_content_provider.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 // 1. Convertimos a un StatefulWidget

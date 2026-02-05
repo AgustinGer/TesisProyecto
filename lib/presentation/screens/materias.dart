@@ -44,27 +44,6 @@ class Materias extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Contenido del Curso'),
         actions: [
-     /*     IconButton(           
-            icon: const Icon(
-              Icons.chat_outlined,
-              color: Colors.white,
-            ),
-            tooltip: 'Mensajes',
-            onPressed: () {
-              // Navegamos a la pantalla de mensajes
-              context.push('/mensajes');
-            },
-          ),
-
-          IconButton(
-            icon: const Icon(Icons.assessment_outlined, color: Colors.white), // O Icons.grade_outlined
-            tooltip: 'Ver mis notas',
-            onPressed: () {
-              // Navegamos a la pantalla de notas pasando el ID del curso
-              context.push('/mis-notas/$courseId');
-            },
-          ),*/
-
             Builder(
                 builder: (context) => GestureDetector(
                   onTap: () => Scaffold.of(context).openEndDrawer(),
@@ -191,7 +170,22 @@ class Materias extends ConsumerWidget {
                   text: 'Mis Calificaciones',
                   onTap: () {
                     Navigator.pop(context);
-                    context.push('/mis-notas/$courseId');
+
+                    final roleC = userRoleAsync.value ?? 'student';
+
+                    // 2. Definimos quién es "Profesor"
+                    final isProfesorCalificacion = roleC == 'admin' ||
+                        roleC == 'manager' ||
+                        roleC == 'editingteacher' ||
+                        roleC == 'teacher';
+                   // context.push('/mis-notas/$courseId');
+                  if (isProfesorCalificacion) {
+                      // SI ES PROFESOR: Va a la lista de alumnos
+                      context.push('/lista-estudiantes/$courseId');
+                    } else {
+                      // SI ES ALUMNO: Va a sus propias notas
+                      context.push('/mis-notas/$courseId');
+                    }
                   },
                 ),
                 _buildDrawerItem(

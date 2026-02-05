@@ -60,3 +60,36 @@ final studentSubmissionsProvider = FutureProvider.family<List<Map<String, dynami
     rethrow;
   }
 });
+
+
+final courseStudentsProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, int>((ref, courseId) async {
+
+  final apiUrl = ref.read(moodleApiUrlProvider);
+  final token = ref.read(authTokenProvider)!;
+
+  final response = await http.post(Uri.parse(apiUrl), body: {
+    'wstoken': token,
+    'wsfunction': 'core_enrol_get_enrolled_users',
+    'moodlewsrestformat': 'json',
+    'courseid': courseId.toString(),
+  });
+
+  final data = json.decode(response.body);
+
+  if (data is Map && data.containsKey('exception')) {
+    throw Exception(data['message']);
+  }
+
+  final List users = data as List;
+
+  return users
+      .where((u) =>
+          (u['roles'] as List).any((r) => r['shortname'] == 'student'))
+      .map((u) => {
+            'id': u['id'],
+            'fullname': u['fullname'],
+            'profileimageurl': u['profileimageurl'],
+          })
+      .toList();
+});

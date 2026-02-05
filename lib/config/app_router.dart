@@ -2,6 +2,7 @@
 //import 'package:flutter_tesis/presentation/profesor_screen/assign.dart';
 import 'package:flutter_tesis/presentation/profesor_screen/calificar_tarea.dart';
 import 'package:flutter_tesis/presentation/profesor_screen/crear_tarea_screen.dart';
+import 'package:flutter_tesis/presentation/profesor_screen/lista_notas_estudiantes.dart';
 import 'package:flutter_tesis/presentation/profesor_screen/url.dart';
 import 'package:flutter_tesis/presentation/profesor_screen/estudiante_tarea.dart';
 import 'package:flutter_tesis/presentation/screens.dart';
@@ -216,5 +217,26 @@ final appRouter = GoRouter(
           return MisNotasScreen(courseId: courseId);
         },
       ),
+
+      GoRoute(
+      path: '/mis-notas/:courseId/:userId',
+      builder: (context, state) {
+        final courseId = int.parse(state.pathParameters['courseId']!);
+        final userId = int.parse(state.pathParameters['userId']!);
+
+        return MisNotasScreen(
+          courseId: courseId,
+          userId: userId,
+        );
+      },
+    ),
+
+  GoRoute(
+      path: '/lista-estudiantes/:courseId',
+      builder: (context, state) {
+        final courseId = int.parse(state.pathParameters['courseId']!);
+        return ListaEstudiantesScreen(courseId: courseId);
+      },
+    ),
   ],  
 );

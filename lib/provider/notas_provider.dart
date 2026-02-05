@@ -9,19 +9,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // Si no, reemplaza esto con cómo obtienes tus credenciales.
 // final sessionProvider ... 
 
-final courseGradesProvider = FutureProvider.family<List<GradeItem>, int>((ref, courseId) async {
-  
-  // 1. Obtener credenciales (AJUSTA ESTO A TU PROYECTO)
-  // Ejemplo: final prefs = await SharedPreferences.getInstance();
-  // final String token = prefs.getString('token') ?? '';
-  // final String baseUrl = prefs.getString('url') ?? '';
-  // final int userId = prefs.getInt('userId') ?? 0;
-  
+final courseGradesProvider =
+  FutureProvider.family<List<GradeItem>, ({int courseId, int? userId})>(
+    (ref, params) async {
+
   // --- VALORES DE EJEMPLO (Reemplázalos con tus variables reales) ---
   // ID del usuario logueado en Moodle
   final token = ref.read(authTokenProvider);
-  final userId = ref.read(userIdProvider);
+  //final userId = ref.read(userIdProvider);
   final baseUrl = ref.read(moodleApiUrlProvider);
+  
+  final loggedUserId = ref.read(userIdProvider);
+  final effectiveUserId = params.userId ?? loggedUserId;
   // ------------------------------------------------------------------
 
   // 2. Configurar la URL de la función Moodle
@@ -32,8 +31,9 @@ final courseGradesProvider = FutureProvider.family<List<GradeItem>, int>((ref, c
     'wstoken': token,
     'wsfunction': 'gradereport_user_get_grade_items',
     'moodlewsrestformat': 'json',
-    'courseid': courseId.toString(),
-    'userid': userId.toString(), // Importante para ver TUS notas
+    'courseid': params.courseId.toString(),
+   // 'userid': userId.toString(), // Importante para ver TUS notas
+    'userid': effectiveUserId.toString(),
   });
 
   if (response.statusCode == 200) {
