@@ -5,6 +5,7 @@ import 'package:flutter_tesis/presentation/profesor_screen/crear_tarea_screen.da
 import 'package:flutter_tesis/presentation/profesor_screen/url.dart';
 import 'package:flutter_tesis/presentation/profesor_screen/estudiante_tarea.dart';
 import 'package:flutter_tesis/presentation/screens.dart';
+import 'package:flutter_tesis/presentation/screens/calificaciones.dart';
 import 'package:flutter_tesis/presentation/screens/chat.dart';
 import 'package:flutter_tesis/presentation/screens/description.dart';
 import 'package:flutter_tesis/presentation/screens/discusion.dart';
@@ -208,6 +209,12 @@ final appRouter = GoRouter(
    },
   ),
 
-
+  GoRoute(
+        path: '/mis-notas/:courseId',
+        builder: (context, state) {
+          final courseId = int.parse(state.pathParameters['courseId']!);
+          return MisNotasScreen(courseId: courseId);
+        },
+      ),
   ],  
 );
