@@ -110,11 +110,7 @@ void _iniciarActualizacionAutomatica() {
           Expanded(
             child: asyncMessages.when(
               data: (messages) {
-                print('DEBUG UI: Renderizando mensajes. Cantidad: ${messages?.length}');
-
-                if (messages == null) {
-                  return const Center(child: Text("Error: Datos nulos del servidor"));
-                }
+                print('DEBUG UI: Renderizando mensajes. Cantidad: ${messages.length}');
 
                 if (messages.isEmpty) {
                   return const Center(child: Text("No hay mensajes en esta conversación."));
