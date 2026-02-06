@@ -327,15 +327,29 @@ void _showError(String msg) {
                     }
 
                     // 1. Extraemos el valor crudo y tratamos de convertirlo a un número
-                    final rawGrade = gradeData['grade'];
-                    double? gradeValue = double.tryParse(rawGrade.toString());
+                  
+                  //  final rawGrade = gradeData['grade'];
+                  //  double? gradeValue = double.tryParse(rawGrade.toString());
+                   double? gradeValue;
+                    String formattedGrade = 'Sin calificar';
+
+                    if (gradeData != null && gradeData['grade'] != null) {
+                      final rawGrade = gradeData['grade'];
+                      gradeValue = double.tryParse(rawGrade.toString());
+
+                      if (gradeValue != null) {
+                        formattedGrade = gradeValue
+                            .toStringAsFixed(2)
+                            .replaceAll(RegExp(r'\.00$'), '');
+                      }
+                    }
 
                     // 2. Creamos un String formateado
                     // Si el valor es nulo (no hay nota), mostramos '0'
                     // Si no, lo limitamos a 2 decimales y quitamos ceros innecesarios al final
-                    String formattedGrade = gradeValue != null 
+                 /*   String formattedGrade = gradeValue != null 
                         ? gradeValue.toStringAsFixed(2).replaceAll(RegExp(r'\.00$'), '') 
-                        : '0';
+                        : '0';*/
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -346,7 +360,9 @@ void _showError(String msg) {
                         ),
                         
                         // Si ya hay una nota asignada, mostramos el cuadro de resultados
-                        if (gradeData != null) ...[
+                       // if (gradeData != null) ...[
+                          if (gradeValue != null) ...[
+
                           const SizedBox(height: 20),
                           Container(
                             width: double.infinity,

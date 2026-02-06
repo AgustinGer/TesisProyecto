@@ -232,26 +232,6 @@ Widget _buildInfoCard(String label, String value, Color color) {
     );
   }
 
-  /*Future<void> _abrirArchivo(String url) async {
-    final String token = ref.read(authTokenProvider)!;
-    // EL TRUCO: Adjuntar el token para tener permiso de descarga
-    final String urlConToken = '$url${url.contains('?') ? '&' : '?'}token=$token';
-
-    final Uri uri = Uri.parse(urlConToken);
-    
-    try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        throw 'No se pudo abrir la URL: $urlConToken';
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al abrir el archivo: $e')),
-      );
-    }
-  }*/
-
  // --- ENVIAR NOTA ---
   void _enviarCalificacion(BuildContext context) async {
     final nota = double.tryParse(_gradeController.text);

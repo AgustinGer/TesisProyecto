@@ -5,12 +5,20 @@ class GradeItem {
   final String? feedback;
   final bool isCategory; // Para saber si es el total de una categoría
 
+    // 🔥 NUEVO
+  String? sectionName;
+  final String itemmodule;
+  final int? iteminstance;
+
   GradeItem({
     required this.itemname,
     required this.gradeformatted,
     required this.rangeformatted,
     this.feedback,
     this.isCategory = false,
+    this.sectionName,//aqui
+    required this.itemmodule,
+    required this.iteminstance,
   });
 
   factory GradeItem.fromJson(Map<String, dynamic> json) {
@@ -25,6 +33,11 @@ class GradeItem {
       feedback: json['feedback'],
       // Moodle suele marcar los totales con 'itemtype': 'course' o 'category'
       isCategory: json['itemtype'] == 'course' || json['itemtype'] == 'category',
+    
+    //aqui
+      itemmodule: json['itemmodule'] ?? '',
+      iteminstance: json['iteminstance'],
+    
     );
   }
 }
