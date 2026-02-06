@@ -6,7 +6,7 @@ import 'package:flutter_tesis/presentation/shared/grade.dart';
 //import 'package:flutter_tesis/provider/auth_provider.dart';
 import 'package:flutter_tesis/provider/course_content_provider.dart';
 import 'package:flutter_tesis/provider/notas_provider.dart';
-import 'package:flutter_tesis/provider/user_role_provider.dart';
+//import 'package:flutter_tesis/provider/user_role_provider.dart';
 import 'package:go_router/go_router.dart';
 //import 'package:flutter_tesis/provider/secciones_notas_provider.dart';
 
@@ -24,7 +24,7 @@ class MisNotasScreen extends ConsumerWidget {
     final gradesAsync = ref.watch(courseGradesProvider((courseId: courseId, userId: userId)),);
 
     //final userRoleAsync = ref.watch(userRoleProvider); // el MISMO provider que usas en Materias
-    final userRoleAsync = ref.watch(userRole(courseId));
+    //final userRoleAsync = ref.watch(userRole(courseId));
    /*   final gradesAsync = ref.watch(
         gradesWithSectionProvider(
           (courseId: courseId, userId: userId),

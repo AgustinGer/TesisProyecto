@@ -1,5 +1,6 @@
 //import 'package:flutter/cupertino.dart';
 //import 'package:flutter_tesis/presentation/profesor_screen/assign.dart';
+
 import 'package:flutter_tesis/presentation/profesor_screen/calificar_tarea.dart';
 import 'package:flutter_tesis/presentation/profesor_screen/crear_tarea_screen.dart';
 import 'package:flutter_tesis/presentation/profesor_screen/lista_notas_estudiantes.dart';
@@ -178,25 +179,7 @@ final appRouter = GoRouter(
   },
 ),
 
-  GoRoute(
-    path: '/calificar-tarea/:courseId/:assignId/:userId',
-    builder: (context, state) {
-      final courseId = int.parse(state.pathParameters['courseId']!);
-      final assignId = int.parse(state.pathParameters['assignId']!);
-      final userId = int.parse(state.pathParameters['userId']!);
-      
-      // Si extra es nulo, ponemos un texto genérico para que no explote
-      final String studentName = (state.extra as String?) ?? 'Estudiante';
 
-      return PantallaCalificar(
-        courseId: courseId, 
-        assignId: assignId, 
-        userId: userId,
-        studentName: studentName,
-      );
-    },
-  ),
-  
   GoRoute(
   path: '/crear-tarea/:courseId',
   builder: (context, state) {
@@ -218,7 +201,7 @@ final appRouter = GoRouter(
         },
       ),
 
-      GoRoute(
+   GoRoute(
       path: '/mis-notas/:courseId/:userId',
       builder: (context, state) {
         final courseId = int.parse(state.pathParameters['courseId']!);
@@ -230,6 +213,26 @@ final appRouter = GoRouter(
         );
       },
     ),
+
+   GoRoute(
+      path: '/calificar-tarea/:courseId/:assignId/:userId',
+      builder: (context, state) {
+        final courseId = int.parse(state.pathParameters['courseId']!);
+        final assignId = int.parse(state.pathParameters['assignId']!);
+        final userId = int.parse(state.pathParameters['userId']!);
+        
+        // Si extra es nulo, ponemos un texto genérico para que no explote
+        final String studentName = (state.extra as String?) ?? 'Estudiante';
+
+        return PantallaCalificar(
+          courseId: courseId, 
+          assignId: assignId, 
+          userId: userId,
+          studentName: studentName,
+        );
+      },
+    ),
+
 
   GoRoute(
       path: '/lista-estudiantes/:courseId',

@@ -16,10 +16,17 @@ import 'package:flutter_tesis/provider/theme_provider.dart';
 //import 'package:flutter_tesis/presentation/screens/login.dart';
 import 'package:flutter_tesis/theme/app_temas.dart';
 
+//final container = ProviderContainer();
 void main(){
 //  HttpOverrides.global = MyHttpOverrides();
+ 
+
   runApp(
     ProviderScope(child: MyApp())
+      /*UncontrolledProviderScope(
+      container: container,
+      child: const MyApp(),
+    ),*/
   );
 }
 class MyApp extends ConsumerWidget {
@@ -30,7 +37,8 @@ class MyApp extends ConsumerWidget {
     
     final isDarkMode = ref.watch(isDarkModeProvider);
     final selectedColor = ref.watch(selectColorProvider);
-
+   
+    
     return MaterialApp.router(
      // title: 'Yes o no',
      routerConfig: appRouter,
