@@ -49,39 +49,6 @@ class CourseActions {
   }
 }
 
-
-/*Future<bool> editarNombreSeccion(int sectionId, String nuevoNombre) async {
-  final String apiUrl = ref.read(moodleApiUrlProvider); 
-  final String token = ref.read(authTokenProvider)!;
-
-  try {
-    final response = await http.post(
-      Uri.parse('$apiUrl/webservice/rest/server.php'),
-      body: {
-        'wstoken': token,
-        'wsfunction': 'core_course_edit_section',
-        'moodlewsrestformat': 'json',
-        'id': sectionId.toString(), // CAMBIO: Debe ser 'id' según la API de Moodle
-        'action': 'setname',
-        'value': nuevoNombre,
-      },
-    );
-    print('Respuesta Renombrado (Raw): ${response.body}');
-    
-    if (response.statusCode == 200) {
-      final String body = response.body;
-      
-      // Moodle devuelve un error dentro de un 200 OK si hay excepciones
-      if (body.contains('exception')) {
-        return false;
-      }
-      return true;
-    }
-    return false;
-  } catch (e) {
-    return false;
-  }
-}*/
 Future<bool> editarNombreSeccion(int sectionId, String nuevoNombre) async {
   final String apiUrl = ref.read(moodleApiUrlProvider); 
   final String token = ref.read(authTokenProvider)!;

@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-//import 'package:flutter_tesis/presentation/profesor_screen/calificar_tarea.dart';
-//import 'package:flutter_tesis/presentation/screens/actividades.dart';
 import 'package:flutter_tesis/presentation/shared/grade.dart';
-//import 'package:flutter_tesis/provider/auth_provider.dart';
 import 'package:flutter_tesis/provider/course_content_provider.dart';
 import 'package:flutter_tesis/provider/notas_provider.dart';
-//import 'package:flutter_tesis/provider/user_role_provider.dart';
 import 'package:go_router/go_router.dart';
-//import 'package:flutter_tesis/provider/secciones_notas_provider.dart';
+
 
 class MisNotasScreen extends ConsumerWidget {
   final int courseId;
@@ -18,23 +14,7 @@ class MisNotasScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // USAMOS EL NUEVO PROVIDER
-   // final gradesAsync = ref.watch(courseGradesProvider(courseId));
-   
-   
     final gradesAsync = ref.watch(courseGradesProvider((courseId: courseId, userId: userId)),);
-
-    //final userRoleAsync = ref.watch(userRoleProvider); // el MISMO provider que usas en Materias
-    //final userRoleAsync = ref.watch(userRole(courseId));
-   /*   final gradesAsync = ref.watch(
-        gradesWithSectionProvider(
-          (courseId: courseId, userId: userId),
-        ),
-      );*/
-
-   //final modulesAsync = ref.watch(courseModulesFlatProvider(courseId));
-
-
-
     return Scaffold(
       appBar: AppBar(title: const Text('Mis Calificaciones')),
 
@@ -138,54 +118,7 @@ class MisNotasScreen extends ConsumerWidget {
                           );
                         }
                       },
-
-
-
-                /*onTap: () {
-                  if (item.isCategory || item.iteminstance == null) return;
-
-                  if (item.itemmodule == 'assign') {
-                    context.push(
-                      '/actividades/$courseId/${item.iteminstance}',
-                    );
-                  }
-                },*/
-              ),
-
-
-
-                /*ListTile(
-                  title: Text(
-                   // item.itemname,
-                    displayName,
-                    style: TextStyle(fontWeight: isTotal ? FontWeight.bold : FontWeight.normal),
-                  ),
-                //  subtitle: Text('Rango: ${item.rangeformatted}'),
-
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (item.sectionName != null)
-                      Text(
-                        'Unidad: ${item.sectionName}',
-                        style: const TextStyle(fontSize: 13, color: Colors.grey),
-                      ),
-                    Text('Rango: ${item.rangeformatted}'),
-                  ],
-                ),
-
-                  trailing: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: item.gradeformatted == '-' ? Colors.grey[300] : Colors.green[100],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      item.gradeformatted,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),*/
+               ),
               );
             },
           );

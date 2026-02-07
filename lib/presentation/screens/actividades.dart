@@ -6,21 +6,12 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_tesis/provider/activity_provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
-//import 'package.intl/intl.dart';
-//import 'package:flutter_tesis/providers/assignment_provider.dart';
-
-
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
-// Asegúrate de que las rutas a tus providers sean correcta
-
 import 'package:flutter_tesis/provider/auth_provider.dart';
-//import 'package:open_filex/open_filex.dart';
-//import 'package:path_provider/path_provider.dart';
-//import 'package:permission_handler/permission_handler.dart';
+
 
 
 class ActividadesScreen extends ConsumerStatefulWidget {
@@ -107,26 +98,6 @@ class _ActividadesScreenState extends ConsumerState<ActividadesScreen> {
 void _showError(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
   }
-
-  /*Future<void> _pickFiles() async {
-    final result = await FilePicker.platform.pickFiles(
-      allowMultiple: true, // Permitir varios a la vez
-    );
-
-    if (result != null) {
-      setState(() {
-        // Agregamos los nuevos archivos a los que ya estaban (sin duplicar rutas)
-        final newFiles = result.paths
-            .where((path) => path != null)
-            .map((path) => File(path!))
-            .toList();
-        
-        _pickedFiles.addAll(newFiles);
-      });
-    }
-  }*/
-
-  // Función para subir el archivo y confirmar la entrega
 
 // --- FUNCIÓN PARA SUBIR 
   Future<void> _submitAssignment() async {
@@ -243,17 +214,6 @@ void _showError(String msg) {
                   // Convertimos el duedate de Moodle (segundos) a DateTime de Dart
           final int dueDateTimestamp = details['duedate'] ?? 0;
                //
-          /*final int cutoffDateTimestamp = details['cutoffdate'] ?? 0; // NUEVO
-          final DateTime now = DateTime.now().toUtc();
-          final DateTime dueDateTime = DateTime.fromMillisecondsSinceEpoch(dueDateTimestamp * 1000);
-          final DateTime cutoffDateTime = DateTime.fromMillisecondsSinceEpoch(cutoffDateTimestamp * 1000);*/
-
-          // LÓGICA DE ESTADOS
-          // 1. ¿Ya pasó la fecha de entrega? (Pero aún puede entregar si no hay corte)
-       //   final bool isLate = dueDateTimestamp != 0 && now.isAfter(dueDateTime);
-          
-          // 2. ¿Ya pasó la fecha de corte? (Bloqueo total)
-       //   final bool isBlockedByCutoff = cutoffDateTimestamp != 0 && now.isAfter(cutoffDateTime);
 
           final DateTime dueDate2 = DateTime.fromMillisecondsSinceEpoch(dueDateTimestamp * 1000);
           // Comparamos: ¿Es "ahora" después de la "fecha límite"?
@@ -264,12 +224,7 @@ void _showError(String msg) {
           final List configs = details['configs'] ?? [];
 
           print("DEBUG: Configs recibidas de Moodle: $configs");
-         // final maxFiles = int.parse(configs.firstWhere((c) => c['name'] == 'maxattachments', orElse: () => {'value': '1'})['value']);
-         // final maxSizeBytes = int.parse(configs.firstWhere((c) => c['name'] == 'maxsubmissionsizebytes', orElse: () => {'value': '0'})['value']);
 
-          // EXTRAER ARCHIVOS ENVIADOS
-          // Buscamos el plugin de tipo 'file' que contiene los documentos
-// Buscamos el valor usando el nombre exacto que aparece en tu log: 'maxfilesubmissions'
           final maxFiles = int.parse(configs.firstWhere(
             (c) => c['name'] == 'maxfilesubmissions', 
             orElse: () => {'value': '1'}
@@ -280,11 +235,6 @@ void _showError(String msg) {
             orElse: () => {'value': '0'}
           )['value'].toString());
 
-          // También puedes extraer los tipos permitidos (en tu log sale "*", que es "todos")
-       /*   final acceptedTypes = configs.firstWhere(
-            (c) => c['name'] == 'filetypeslist', 
-            orElse: () => {'value': '*'}
-          )['value'].toString();*/
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
@@ -327,9 +277,7 @@ void _showError(String msg) {
                     }
 
                     // 1. Extraemos el valor crudo y tratamos de convertirlo a un número
-                  
-                  //  final rawGrade = gradeData['grade'];
-                  //  double? gradeValue = double.tryParse(rawGrade.toString());
+
                    double? gradeValue;
                     String formattedGrade = 'Sin calificar';
 
@@ -343,13 +291,6 @@ void _showError(String msg) {
                             .replaceAll(RegExp(r'\.00$'), '');
                       }
                     }
-
-                    // 2. Creamos un String formateado
-                    // Si el valor es nulo (no hay nota), mostramos '0'
-                    // Si no, lo limitamos a 2 decimales y quitamos ceros innecesarios al final
-                 /*   String formattedGrade = gradeValue != null 
-                        ? gradeValue.toStringAsFixed(2).replaceAll(RegExp(r'\.00$'), '') 
-                        : '0';*/
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -447,52 +388,10 @@ void _showError(String msg) {
                 ), 
 
 
-              /*  GestureDetector(
-                  onTap: _isUploading ? null : _pickFile,
-                  child: Container(
-                    height: 120,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300)
-                    ),
-                    child: Center(
-                      child: _pickedFile == null
-                        ? const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.file_upload_outlined, size: 40, color: Colors.grey),
-                              Text('Seleccionar archivo para entregar'),
-                            ],
-                          )
-                        : Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.check_circle, size: 40, color: Colors.green),
-                              Text(_pickedFile!.path.split('/').last),
-                            ],
-                          ),
-                    ),
-                  ),
-                ),*/
-
-
                 const SizedBox(height: 20),
 
                 if (isPastDueDate)
-                /*if (isBlockedByCutoff) 
-                  _buildAlertBanner(
-                    Icons.lock_clock, 
-                    Colors.red, 
-                    'El plazo de entrega ha cerrado definitivamente el ${_formatTimestamp(cutoffDateTimestamp)}.'
-                  )
-                else if (isLate)
-                  _buildAlertBanner(
-                    Icons.warning_amber_rounded, 
-                    Colors.orange, 
-                    'La fecha límite fue el ${_formatTimestamp(dueDateTimestamp)}. Tu entrega se marcará como retrasada.'
-                  ),*/
+
                 Container(
                   margin: const EdgeInsets.symmetric(vertical: 10),
                   padding: const EdgeInsets.all(12),
@@ -525,18 +424,12 @@ void _showError(String msg) {
                     child:
                     ElevatedButton.icon(
                       icon: const Icon(Icons.send),
-                     // label: Text(_isUploading ? 'Enviando...' : 'REALIZAR ENTREGA'),
                       label: Text('ENVIAR ${_pickedFiles.length} ARCHIVOS'),
-                      //onPressed: _pickedFiles.isEmpty ? null : _submitAssignment,
                       onPressed: (isPastDueDate || _pickedFiles.isEmpty || _isUploading) 
-                      // onPressed: (isBlockedByCutoff || _pickedFiles.isEmpty || _isUploading) 
                     ? null 
                     : _submitAssignment,
                       // LÓGICA DE BLOQUEO:
                       // Si ya pasó la fecha OR no hay archivo seleccionado OR está subiendo: desactivar (null)
-                    //  onPressed: (isPastDueDate || _pickedFile == null || _isUploading) 
-                    /*     ? null*/ 
-                    //      : _submitAssignment,
                           
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.indigo,
@@ -554,137 +447,5 @@ void _showError(String msg) {
         },
       ),
     );
-
-                    /*ElevatedButton.icon(
-                      icon: const Icon(Icons.send),
-                      label: const Text('ENVIAR TAREA'),
-                      onPressed: _pickedFile == null ? null : _submitAssignment,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        backgroundColor: Colors.indigo,
-                        foregroundColor: Colors.white
-                      ),
-                    ),*/
-      /*asyncDetails.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error al cargar detalles: $err')),
-        data: (details) {
-      
-       final asyncStatus = ref.watch(submissionStatusProvider(widget.assignmentId));
-          
-          final String title = details['name'] ?? 'Tarea sin título';
-          final String intro = details['intro'] ?? '<p>Sin descripción.</p>';
-          final int dueDate = details['duedate'] ?? 0;
-          
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-                const Divider(height: 24),
-                const Text('Instrucciones:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                Html(data: intro),
-                const SizedBox(height: 20),
-                const Text('Fecha de entrega:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                Text(_formatTimestamp(dueDate)),
-                const SizedBox(height: 20),
-                
-                const Text('Estado de la entrega:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                asyncStatus.when(
-                  loading: () => const Text('Cargando estado...'),
-                  error: (err, stack) => Text('Error: $err'),
-                  data: (statusData) {
-                    final status = statusData['lastattempt']?['submission']?['status'] ?? 'No entregado';
-                    return Chip(
-                      label: Text(status == 'submitted' ? 'Entregado' : 'No entregado'),
-                      backgroundColor: status == 'submitted' ? Colors.green.shade100 : Colors.orange.shade100,
-                    );
-                  }
-                ),
-                
-                const Divider(height: 30),
-
-                // --- NUEVA SECCIÓN DE UI PARA LA ENTREGA ---
-                const Text('Entrega', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                const SizedBox(height: 12),
-                
-                GestureDetector(
-                  onTap: _pickFile,
-                  child: Container(
-                    height: 150,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade400, style: BorderStyle.solid)
-                    ),
-                    child: Center(
-                      child: _pickedFile == null
-                        ? const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.cloud_upload_outlined, size: 50, color: Colors.grey),
-                              SizedBox(height: 8),
-                              Text('Toca para seleccionar un archivo'),
-                            ],
-                          )
-                        : Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.insert_drive_file, size: 50, color: Colors.blue),
-                            const SizedBox(height: 8),
-                            Text(_pickedFile!.path.split('/').last, textAlign: TextAlign.center),
-                          ],
-                        ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                if (_isUploading)
-                  const Center(child: CircularProgressIndicator())
-                else
-                  Center(
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.file_upload),
-                      label: const Text('Realizar entrega'),
-                      onPressed: _pickedFile == null ? null : _submitAssignment,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15)
-                      ),
-                    ),
-                  )
-                // ------------------------------------------
-              ],
-            ),
-          );
-        },
-      ),
-    );*/
   }
-
-
- /*Widget _buildAlertBanner(IconData icon, Color color, String message) {
-  return Container(
-    margin: const EdgeInsets.symmetric(vertical: 10),
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: color.withOpacity(0.1),
-      borderRadius: BorderRadius.circular(8),
-      border: Border.all(color: color.withOpacity(0.3)),
-    ),
-    child: Row(
-      children: [
-        Icon(icon, color: color),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            message,
-            style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13),
-          ),
-        ),
-      ],
-    ),
-  );
- }*/
 }

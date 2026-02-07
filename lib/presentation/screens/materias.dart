@@ -343,12 +343,33 @@ class Materias extends ConsumerWidget {
                         print('DEBUG módulo forum: $module');
                         context.push('/foro/$forumId');
                         break;
-                        // Caso por defecto: para cualquier otro tipo de módulo.
+
+                        // Dentro del switch (modname) en Materias.dart
+
+                      // Dentro del switch (modname) en tu ListView de Materias
+
+                      case 'glossary':
+                        final int glossaryInstanceId = int.parse(module['instance'].toString());
+                        final int cmid = int.parse(module['id'].toString());
+                        final String glossaryTitle = module['name'] ?? 'Glosario';
+
+                        context.push(
+                          '/glosario/$glossaryInstanceId', 
+                          extra: {
+                            'title': glossaryTitle,
+                            'contextId': cmid, 
+                            'courseId': courseId, // <--- NUEVO: Pasamos el ID del curso
+                          } 
+                        );
+                        break;        
+                      
+                      
                         default:
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Este tipo de contenido no es soportado aún.')),
                           );
                           break;
+                      
                       }
                     },
 

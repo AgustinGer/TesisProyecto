@@ -12,6 +12,7 @@ import 'package:flutter_tesis/presentation/screens/chat.dart';
 import 'package:flutter_tesis/presentation/screens/description.dart';
 import 'package:flutter_tesis/presentation/screens/discusion.dart';
 import 'package:flutter_tesis/presentation/screens/foro.dart';
+import 'package:flutter_tesis/presentation/screens/glosario.dart';
 import 'package:flutter_tesis/presentation/screens/mensajes.dart';
 import 'package:go_router/go_router.dart';
 
@@ -241,5 +242,54 @@ final appRouter = GoRouter(
         return ListaEstudiantesScreen(courseId: courseId);
       },
     ),
+
+
+  /*  GoRoute(
+      path: '/glosario/:id',
+      builder: (context, state) {
+        // Obtenemos el ID de la URL
+        final glossaryId = int.parse(state.pathParameters['id']!);
+        // Obtenemos el Título pasado como objeto "extra"
+        final title = state.extra as String? ?? 'Glosario';
+        
+        return GlosarioScreen(glossaryInstanceId: glossaryId, title: title);
+      },
+    ),*/
+
+       /* GoRoute(
+          path: '/glosario/:id',
+          builder: (context, state) {
+            final glossaryId = int.parse(state.pathParameters['id']!);
+            
+            // RECIBIMOS EL MAPA DE EXTRAS
+            final extras = state.extra as Map<String, dynamic>? ?? {};
+            
+            final title = extras['title'] as String? ?? 'Glosario';
+            // Si falla al recibir, ponemos 0 para evitar crash, pero fallará el comentario
+            final contextId = extras['contextId'] as int? ?? 0; 
+            
+            return GlosarioScreen(
+              glossaryInstanceId: glossaryId, 
+              title: title, 
+              moduleContextId: contextId // Pasamos el ID a la pantalla
+            );
+          },
+        ),*/
+        GoRoute(
+          path: '/glosario/:id',
+          builder: (context, state) {
+            final glossaryId = int.parse(state.pathParameters['id']!);
+            final extras = state.extra as Map<String, dynamic>? ?? {};
+            
+            return GlosarioScreen(
+              glossaryInstanceId: glossaryId, 
+              title: extras['title'] ?? 'Glosario', 
+              moduleContextId: extras['contextId'] ?? 0,
+              courseId: extras['courseId'] ?? 0, // <--- NUEVO
+            );
+          },
+        ),
+
+
   ],  
 );
