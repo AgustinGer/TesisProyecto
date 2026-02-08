@@ -359,6 +359,7 @@ class Materias extends ConsumerWidget {
                             'title': glossaryTitle,
                             'contextId': cmid, 
                             'courseId': courseId, // <--- NUEVO: Pasamos el ID del curso
+                            'isTeacher': isProfesorAsign,
                           } 
                         );
                         break;        

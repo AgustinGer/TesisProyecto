@@ -286,6 +286,7 @@ final appRouter = GoRouter(
               title: extras['title'] ?? 'Glosario', 
               moduleContextId: extras['contextId'] ?? 0,
               courseId: extras['courseId'] ?? 0, // <--- NUEVO
+              isTeacher: extras['isTeacher'] ?? false,
             );
           },
         ),

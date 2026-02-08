@@ -23,6 +23,9 @@ class GlossaryFile {
 
 class GlossaryEntry {
   final int id;
+
+  final int userId;
+
   final String concept; // El término (ej: "Algoritmo")
   final String definition; // La definición (viene en HTML)
   final String userFullName; // Quién lo escribió
@@ -33,6 +36,9 @@ class GlossaryEntry {
 
   GlossaryEntry({
     required this.id,
+    
+    required this.userId,
+
     required this.concept,
     required this.definition,
     required this.userFullName,
@@ -45,6 +51,9 @@ class GlossaryEntry {
     List<GlossaryFile> filesList = list.map((i) => GlossaryFile.fromJson(i)).toList();
     return GlossaryEntry(
       id: json['id'],
+
+      userId: json['userid'] ?? 0,
+      
       concept: json['concept'] ?? 'Sin término',
       definition: json['definition'] ?? '', 
       userFullName: json['userfullname'] ?? 'Anónimo',
