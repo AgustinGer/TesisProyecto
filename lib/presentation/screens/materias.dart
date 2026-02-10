@@ -364,7 +364,20 @@ class Materias extends ConsumerWidget {
                         );
                         break;        
                       
-                      
+                      case 'data': // 'data' es el nombre interno de Moodle para Base de Datos
+                        final int dataInstanceId = int.parse(module['instance'].toString());
+                        final int cmid = int.parse(module['id'].toString());
+                        final String dataTitle = module['name'] ?? 'Base de Datos';
+
+                        context.push(
+                          '/basedatos/$dataInstanceId', 
+                          extra: {
+                            'title': dataTitle,
+                            'moduleId': cmid, 
+                          } 
+                        );
+                        break;
+                                            
                         default:
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Este tipo de contenido no es soportado aún.')),

@@ -9,6 +9,7 @@ import 'package:flutter_tesis/presentation/profesor_screen/estudiante_tarea.dart
 import 'package:flutter_tesis/presentation/screens.dart';
 import 'package:flutter_tesis/presentation/screens/calificaciones.dart';
 import 'package:flutter_tesis/presentation/screens/chat.dart';
+import 'package:flutter_tesis/presentation/screens/database.dart';
 import 'package:flutter_tesis/presentation/screens/description.dart';
 import 'package:flutter_tesis/presentation/screens/discusion.dart';
 import 'package:flutter_tesis/presentation/screens/foro.dart';
@@ -291,6 +292,19 @@ final appRouter = GoRouter(
           },
         ),
 
+        GoRoute(
+          path: '/basedatos/:id',
+          builder: (context, state) {
+            final dbId = int.parse(state.pathParameters['id']!);
+            final extras = state.extra as Map<String, dynamic>? ?? {};
+            
+            return DatabaseScreen(
+              databaseInstanceId: dbId, 
+              title: extras['title'] ?? 'Base de Datos',
+              moduleId: extras['moduleId'] ?? 0,
+            );
+          },
+        ),
 
   ],  
 );
