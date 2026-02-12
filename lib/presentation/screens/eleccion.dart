@@ -6,6 +6,7 @@ import 'package:flutter_tesis/presentation/model/choice_model.dart';
 import 'package:flutter_tesis/presentation/profesor_screen/resultado_eleccion.dart';
 import 'package:flutter_tesis/provider/auth_provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 
 class EleccionScreen extends ConsumerStatefulWidget {
@@ -41,6 +42,9 @@ class _EleccionScreenState extends ConsumerState<EleccionScreen> {
   bool _allowMultiple = false; // ¿Permite seleccionar varias?
   bool _allowUpdate = false;   // ¿Permite cambiar el voto después de guardar? [NUEVO]
   bool _hasVoted = false;      // ¿El usuario ya votó anteriormente? [NUEVO]
+
+  int _timeOpen = 0;
+  int _timeClose = 0;
 
   @override
   void initState() {
@@ -78,6 +82,10 @@ class _EleccionScreenState extends ConsumerState<EleccionScreen> {
               _allowMultiple = (myChoice['allowmultiple'] == 1 || myChoice['allowmultiple'] == true);
               // --- NUEVO: LEEMOS SI SE PERMITE ACTUALIZAR ---
               _allowUpdate = (myChoice['allowupdate'] == 1 || myChoice['allowupdate'] == true);
+
+
+              _timeOpen = myChoice['timeopen'] ?? 0;
+              _timeClose = myChoice['timeclose'] ?? 0;
             });
           }
         }
@@ -120,7 +128,20 @@ class _EleccionScreenState extends ConsumerState<EleccionScreen> {
           });
         }
       }
+    /* else {
+        print("Error del servidor: ${optionsResponse.statusCode}");
+     }
+        
     } catch (e) {
+      print('Error cargando: $e');
+    } finally {
+      // --- CORRECCIÓN CLAVE ---
+      // El loading se apaga SIEMPRE, haya error o haya éxito.
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }*/
+    }catch (e) {
       print('Error cargando: $e');
       if (mounted) setState(() => _isLoading = false);
     }
@@ -193,9 +214,45 @@ class _EleccionScreenState extends ConsumerState<EleccionScreen> {
     int totalVotes = 0;
     for (var op in _options) totalVotes += op.count;
 
+// --- [NUEVO] LÓGICA DE TIEMPO ---
+    final now = DateTime.now();
+    bool isEarly = false;
+    bool isLate = false;
+
+    // Verificamos apertura
+    if (_timeOpen > 0) {
+      final openDate = DateTime.fromMillisecondsSinceEpoch(_timeOpen * 1000);
+      if (now.isBefore(openDate)) isEarly = true;
+    }
+
+    // Verificamos cierre
+    if (_timeClose > 0) {
+      final closeDate = DateTime.fromMillisecondsSinceEpoch(_timeClose * 1000);
+      if (now.isAfter(closeDate)) isLate = true;
+    }
+
+    // Bloqueo final: 
+    // Está bloqueado SI (ya votó Y no puede actualizar) O (es muy temprano) O (es muy tarde)
+    // EXCEPCIÓN: Los profesores suelen poder votar o ver cosas siempre, pero asumamos regla general.
+    final bool isLocked = (_hasVoted && !_allowUpdate) || isEarly || isLate;
+
+    // Mensaje de estado
+    String statusMessage = "";
+    Color statusColor = Colors.transparent;
+    
+    if (isEarly) {
+      statusMessage = "Esta actividad abrirá el: ${DateFormat('dd/MM/yyyy HH:mm').format(DateTime.fromMillisecondsSinceEpoch(_timeOpen * 1000))}";
+      statusColor = Colors.orange.shade100;
+    } else if (isLate) {
+      statusMessage = "Esta actividad cerró el: ${DateFormat('dd/MM/yyyy HH:mm').format(DateTime.fromMillisecondsSinceEpoch(_timeClose * 1000))}";
+      statusColor = Colors.red.shade100;
+    } else if (_hasVoted && !_allowUpdate) {
+      statusMessage = "Ya has realizado tu elección y no puedes cambiarla.";
+      statusColor = Colors.blue.shade100;
+    }
     // --- LÓGICA DE BLOQUEO ---
     // Está bloqueado SI (ya votó Y NO se permite actualizar)
-    final bool isLocked = _hasVoted && !_allowUpdate;
+    //final bool isLocked = _hasVoted && !_allowUpdate;
 
     return Scaffold(
       appBar: AppBar(
@@ -238,7 +295,9 @@ class _EleccionScreenState extends ConsumerState<EleccionScreen> {
                     },
                   );
 
-                  Navigator.pop(context); // Cerrar loading
+//                  Navigator.pop(context); // Cerrar loading
+
+                  if (context.mounted) Navigator.pop(context);
 
                   if (response.statusCode == 200) {
                     final data = json.decode(response.body);
@@ -291,6 +350,26 @@ class _EleccionScreenState extends ConsumerState<EleccionScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+
+           /*      if (statusMessage.isNotEmpty)
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 15),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: statusColor,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.black12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(isLate ? Icons.lock_clock : Icons.info_outline, color: Colors.black54),
+                        const SizedBox(width: 10),
+                        Expanded(child: Text(statusMessage, style: const TextStyle(fontWeight: FontWeight.w500))),
+                      ],
+                    ),
+                  ),*/
+
                     const Text("Tu elección:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo)),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -392,6 +471,13 @@ class _EleccionScreenState extends ConsumerState<EleccionScreen> {
                       isLocked ? "VOTO REGISTRADO" : (_allowMultiple ? "GUARDAR SELECCIONES" : "GUARDAR MI ELECCIÓN"), 
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
                     ),
+               /*    icon: Icon(isLocked ? Icons.lock : Icons.check_circle),
+                    label: Text(
+                      isLate ? "ACTIVIDAD CERRADA" : 
+                      isEarly ? "NO INICIADA" : 
+                      (_hasVoted ? "VOTO REGISTRADO" : "GUARDAR MI ELECCIÓN")
+                    ),*/
+
                   ),
                 ),
               ],

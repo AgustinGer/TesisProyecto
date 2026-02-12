@@ -42,8 +42,9 @@ class ChoiceOption {
     return ChoiceOption(
       id: json['id'],
       text: json['text'] ?? '',
-     // count: json['countanswer'] ?? 0,
+     
       count: json['countanswer'] ?? json['numberofuser'] ?? 0,
+//count: json['countanswers'] ?? json['countanswer'] ?? json['numberofuser'] ?? 0,
       checked: json['checked'] == true,
       disabled: json['disabled'] == true,
       userResponses: usersList, // <--- Guardamos la lista
