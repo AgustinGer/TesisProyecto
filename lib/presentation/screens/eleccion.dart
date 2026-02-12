@@ -6,7 +6,7 @@ import 'package:flutter_tesis/presentation/model/choice_model.dart';
 import 'package:flutter_tesis/presentation/profesor_screen/resultado_eleccion.dart';
 import 'package:flutter_tesis/provider/auth_provider.dart';
 import 'package:http/http.dart' as http;
-import 'package:intl/intl.dart';
+//import 'package:intl/intl.dart';
 
 
 class EleccionScreen extends ConsumerStatefulWidget {
@@ -105,7 +105,7 @@ class _EleccionScreenState extends ConsumerState<EleccionScreen> {
       if (optionsResponse.statusCode == 200) {
 
         final data = json.decode(optionsResponse.body);
-        print("DEBUG JSON MOODLE: ${json.encode(data)}");
+       // print("DEBUG JSON MOODLE: ${json.encode(data)}");
 
         
         if (data is Map && data.containsKey('options')) {
@@ -237,7 +237,7 @@ class _EleccionScreenState extends ConsumerState<EleccionScreen> {
     final bool isLocked = (_hasVoted && !_allowUpdate) || isEarly || isLate;
 
     // Mensaje de estado
-    String statusMessage = "";
+    /*String statusMessage = "";
     Color statusColor = Colors.transparent;
     
     if (isEarly) {
@@ -249,7 +249,7 @@ class _EleccionScreenState extends ConsumerState<EleccionScreen> {
     } else if (_hasVoted && !_allowUpdate) {
       statusMessage = "Ya has realizado tu elección y no puedes cambiarla.";
       statusColor = Colors.blue.shade100;
-    }
+    }*/
     // --- LÓGICA DE BLOQUEO ---
     // Está bloqueado SI (ya votó Y NO se permite actualizar)
     //final bool isLocked = _hasVoted && !_allowUpdate;
