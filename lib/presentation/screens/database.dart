@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter_tesis/presentation/calificar_database_modal.dart';
 import 'package:flutter_tesis/presentation/comentarios_database_modal.dart';
 import 'package:flutter_tesis/provider/database_config_provider.dart';
-import 'package:flutter_tesis/provider/teacher_provider.dart';
+//import 'package:flutter_tesis/provider/teacher_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -124,7 +124,7 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
 
     // 3. CARGAMOS PROFESORES (Para no calificar al jefe de cátedra si eres auxiliar, o lógica similar)
     // Asumo que tienes el provider courseTeachersProvider del glosario
-    final teachersListAsync = ref.watch(courseTeachersProvider(widget.courseId));
+    //final teachersListAsync = ref.watch(courseTeachersProvider(widget.courseId));
     
     //final myUserId = ref.read(userIdProvider);
 
@@ -162,7 +162,7 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
             itemCount: entries.length,
             itemBuilder: (context, index) {
               final entry = entries[index];
-              final bool isMe = (entry.userId == myUserId);
+             // final bool isMe = (entry.userId == myUserId);
               
               return Card(
                 elevation: 2,

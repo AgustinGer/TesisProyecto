@@ -12,6 +12,7 @@ import 'package:flutter_tesis/presentation/screens/chat.dart';
 import 'package:flutter_tesis/presentation/screens/database.dart';
 import 'package:flutter_tesis/presentation/screens/description.dart';
 import 'package:flutter_tesis/presentation/screens/discusion.dart';
+import 'package:flutter_tesis/presentation/screens/eleccion.dart';
 import 'package:flutter_tesis/presentation/screens/foro.dart';
 import 'package:flutter_tesis/presentation/screens/glosario.dart';
 import 'package:flutter_tesis/presentation/screens/mensajes.dart';
@@ -240,19 +241,6 @@ final appRouter = GoRouter(
           },
         ),
 
-    /*  GoRoute(
-          path: '/basedatos/:id',
-          builder: (context, state) {
-            final dbId = int.parse(state.pathParameters['id']!);
-            final extras = state.extra as Map<String, dynamic>? ?? {};
-            
-            return DatabaseScreen(
-              databaseInstanceId: dbId, 
-              title: extras['title'] ?? 'Base de Datos',
-              moduleId: extras['moduleId'] ?? 0,
-            );
-          },
-        ),*/
       GoRoute(
       path: '/basedatos/:id',
       builder: (context, state) {
@@ -276,6 +264,39 @@ final appRouter = GoRouter(
         );
       },
     ),
+
+    // En tu configuración de GoRouter
+   /* GoRoute(
+      path: '/eleccion',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return EleccionScreen(
+          choiceId: extra['choiceId'],
+          moduleId: extra['moduleId'],
+          title: extra['title'],
+          
+        );
+      },
+    ),*/
+
+
+    // RUTA PARA LA ACTIVIDAD DE ELECCIÓN (CHOICE)
+      GoRoute(
+        path: '/eleccion',
+        builder: (context, state) {
+          // 1. Recibimos el objeto 'extra' que enviamos desde Materias.dart
+          final Map<String, dynamic> args = state.extra as Map<String, dynamic>;
+
+          // 2. Retornamos la pantalla pasando todos los parámetros
+          return EleccionScreen(
+            choiceId: args['choiceId'], // ID de la instancia
+            moduleId: args['moduleId'], // CMID
+            courseId: args['courseId'], // <--- VITAL: ID del Curso para la config
+            title: args['title'],       // Título de la actividad
+            isTeacher: args['isTeacher'] ?? false,
+          );
+        },
+      ),
 
   ],  
 );

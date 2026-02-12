@@ -403,6 +403,23 @@ class Materias extends ConsumerWidget {
                           );
                           break;
                                             
+                      case 'choice':
+                        final int choiceInstanceId = int.parse(module['instance'].toString());
+                        final int cmid = int.parse(module['id'].toString());
+                        final String choiceTitle = module['name'] ?? 'Elección';
+
+                        context.push(
+                          '/eleccion', 
+                          extra: {
+                            'choiceId': choiceInstanceId,
+                            'moduleId': cmid,
+                            'title': choiceTitle,
+                            'courseId': courseId, // <--- AGREGAR ESTO (Es vital)
+                            'isTeacher': isProfesorAsign,
+                          }
+                        );
+                        break;
+
                         default:
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Este tipo de contenido no es soportado aún.')),
