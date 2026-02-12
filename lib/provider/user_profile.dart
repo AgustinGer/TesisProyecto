@@ -8,8 +8,8 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_tesis/provider/auth_provider.dart';
 
 // Este provider no recibe parámetros, lee de otros providers.
-final userProfileProvider = FutureProvider<Map<String, dynamic>>((ref) async {
-  
+//final userProfileProvider = FutureProvider.family<Map<String, dynamic>,int>((ref, userIdToFetch) async {
+  final userProfileProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   // "Observa" el token y el ID del usuario que inició sesión.
   final token = ref.watch(authTokenProvider);
   final userId = ref.watch(userIdProvider);

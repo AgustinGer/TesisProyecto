@@ -9,7 +9,6 @@ class DatabaseField {
   final bool required;
 
   // NUEVO: Capturamos el parámetro que contiene las opciones (para menús, radios, etc.)
-  //final String param1;
 
   DatabaseField({
     required this.id,
@@ -35,17 +34,6 @@ class DatabaseField {
           .split('\n')
           .where((e) => e.trim().isNotEmpty)
           .toList(),
-    
-    //  description: json['description'] ?? '',
-    //  required: json['required'] == 1,
-    //  param1: json['param1'] ?? '',
     );
   }
-
-  // Helper para obtener las opciones como lista
-  /*List<String> get options {
-    if (param1.isEmpty) return [];
-    // Moodle separa las opciones por salto de línea (\n o \r\n)
-    return const LineSplitter().convert(param1).where((s) => s.trim().isNotEmpty).toList();
-  }*/
 }

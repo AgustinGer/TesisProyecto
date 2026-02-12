@@ -364,7 +364,7 @@ class Materias extends ConsumerWidget {
                         );
                         break;        
                       
-                      case 'data': // 'data' es el nombre interno de Moodle para Base de Datos
+                     /* case 'data': // 'data' es el nombre interno de Moodle para Base de Datos
                         final int dataInstanceId = int.parse(module['instance'].toString());
                         final int cmid = int.parse(module['id'].toString());
                         final String dataTitle = module['name'] ?? 'Base de Datos';
@@ -376,7 +376,32 @@ class Materias extends ConsumerWidget {
                             'moduleId': cmid, 
                           } 
                         );
-                        break;
+                        break;*/
+
+                        case 'data': // 'data' es el nombre interno de Moodle para Base de Datos
+                          final int dataInstanceId = int.parse(module['instance'].toString());
+                          final int cmid = int.parse(module['id'].toString());
+                          final String dataTitle = module['name'] ?? 'Base de Datos';
+                          
+                          // EXTRAEMOS EL CONTEXT ID (Vital para calificar)
+                          // Moodle suele devolverlo en la propiedad 'contextid' dentro del módulo
+                          final int contextId = module['contextid'] != null 
+                              ? int.parse(module['contextid'].toString()) 
+                              : 0;
+
+                          context.push(
+                            '/basedatos/$dataInstanceId', 
+                            extra: {
+                              'title': dataTitle,
+                              'moduleId': cmid,
+                              
+                              // --- NUEVOS PARÁMETROS OBLIGATORIOS ---
+                              'contextId': contextId,        // Necesario para el modal de calificación
+                              'courseId': courseId,          // Necesario para buscar la configuración
+                              'isTeacher': isProfesorAsign,  // Necesario para mostrar el botón
+                            } 
+                          );
+                          break;
                                             
                         default:
                           ScaffoldMessenger.of(context).showSnackBar(

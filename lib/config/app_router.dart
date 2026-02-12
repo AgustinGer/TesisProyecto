@@ -77,11 +77,7 @@ final appRouter = GoRouter(
         return RecursosScreen(files: files);
       },
     ),
-    
-   /* GoRoute(
-      path: '/videos',
-      builder: (context, state) => Videos(),
-      ),*/
+
     GoRoute(
       path: '/videos',
       builder: (context, state) {
@@ -145,22 +141,6 @@ final appRouter = GoRouter(
         return DiscussionDetailScreen(discussionId: discussionId);
       },
     ),
-
-  /*  GoRoute(
-  path: '/crear-tarea/:courseId',
-  builder: (context, state) {
-    // Extraemos el ID del curso de la URL
-    final courseId = int.parse(state.pathParameters['courseId']!);
-    
-    // Extraemos la lista de secciones enviada mediante 'extra'
-    final List sections = state.extra as List;
-    
-    return CrearTareaScreen(
-      courseId: courseId, 
-      sections: sections
-    );
-   },
-  ),*/
 
   GoRoute(
     path: '/crear-url/:courseId',
@@ -244,39 +224,7 @@ final appRouter = GoRouter(
       },
     ),
 
-
-  /*  GoRoute(
-      path: '/glosario/:id',
-      builder: (context, state) {
-        // Obtenemos el ID de la URL
-        final glossaryId = int.parse(state.pathParameters['id']!);
-        // Obtenemos el Título pasado como objeto "extra"
-        final title = state.extra as String? ?? 'Glosario';
-        
-        return GlosarioScreen(glossaryInstanceId: glossaryId, title: title);
-      },
-    ),*/
-
-       /* GoRoute(
-          path: '/glosario/:id',
-          builder: (context, state) {
-            final glossaryId = int.parse(state.pathParameters['id']!);
-            
-            // RECIBIMOS EL MAPA DE EXTRAS
-            final extras = state.extra as Map<String, dynamic>? ?? {};
-            
-            final title = extras['title'] as String? ?? 'Glosario';
-            // Si falla al recibir, ponemos 0 para evitar crash, pero fallará el comentario
-            final contextId = extras['contextId'] as int? ?? 0; 
-            
-            return GlosarioScreen(
-              glossaryInstanceId: glossaryId, 
-              title: title, 
-              moduleContextId: contextId // Pasamos el ID a la pantalla
-            );
-          },
-        ),*/
-        GoRoute(
+     GoRoute(
           path: '/glosario/:id',
           builder: (context, state) {
             final glossaryId = int.parse(state.pathParameters['id']!);
@@ -292,7 +240,7 @@ final appRouter = GoRouter(
           },
         ),
 
-        GoRoute(
+    /*  GoRoute(
           path: '/basedatos/:id',
           builder: (context, state) {
             final dbId = int.parse(state.pathParameters['id']!);
@@ -304,7 +252,30 @@ final appRouter = GoRouter(
               moduleId: extras['moduleId'] ?? 0,
             );
           },
-        ),
+        ),*/
+      GoRoute(
+      path: '/basedatos/:id',
+      builder: (context, state) {
+        // 1. Obtenemos el ID de la URL
+        final dbId = int.parse(state.pathParameters['id']!);
+        
+        // 2. Obtenemos el mapa de extras (datos que pasas al hacer push)
+        final extras = state.extra as Map<String, dynamic>? ?? {};
+        
+        return DatabaseScreen(
+          databaseInstanceId: dbId,
+          title: extras['title'] ?? 'Base de Datos',
+          moduleId: extras['moduleId'] ?? 0,
+          
+          // --- AGREGAMOS LOS CAMPOS FALTANTES ---
+          // Si no vienen en el extra, ponemos 0 o false por defecto para que no falle la app,
+          // pero OJO: si son 0, no podrás calificar.
+          moduleContextId: extras['contextId'] ?? 0, 
+          courseId: extras['courseId'] ?? 0,
+          isTeacher: extras['isTeacher'] ?? false,
+        );
+      },
+    ),
 
   ],  
 );

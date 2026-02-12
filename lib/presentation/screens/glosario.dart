@@ -152,33 +152,7 @@ class GlosarioScreen extends ConsumerWidget {
                    ),
 
                   // 2. DIVISOR (Ahora está fuera del Container, es válido)
-                          const Divider(height: 1),
-
-                          // 3. BOTÓN COMENTARIOS
-                       /*   Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                TextButton.icon(
-                                  icon: const Icon(Icons.comment_outlined, size: 18),
-                                  label: const Text('Comentarios'),
-                                  onPressed: () {
-                                    showModalBottomSheet(
-                                      context: context,
-                                      isScrollControlled: true,
-                                      backgroundColor: Colors.transparent,
-                                      builder: (context) => ComentariosModal(
-                                        contextId: moduleContextId,
-                                        entryId: entry.id,
-                                        entryTitle: entry.concept,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),*/
+                    const Divider(height: 1),
 
                     configAsync.when(
                       loading: () => const SizedBox.shrink(),
@@ -192,16 +166,12 @@ class GlosarioScreen extends ConsumerWidget {
                         final bool isMe = (entry.userId == myUserId);
 
                         // 1. ¿Mostrar botón CALIFICAR?
-                        // - Soy profesor (isTeacher)
-                        // - Moodle tiene ratings activos (config.ratingsEnabled)
-                        // - El autor NO es profesor (!isAuthorTeacher)
-                        // - El autor NO soy yo (!isMe)
                         final bool showRating = isTeacher && 
                                                 config.ratingsEnabled && 
                                                 !isAuthorTeacher && 
                                                 !isMe;
                         // SI NO ESTÁN PERMITIDOS, NO MOSTRAMOS NADA
-                       // if (!allowComments) return const SizedBox.shrink();
+                      
                        if (!showComments && !showRating) return const SizedBox.shrink();
                         // SI SÍ ESTÁN PERMITIDOS, MOSTRAMOS EL DIVIDER Y EL BOTÓN
                         return Column(
