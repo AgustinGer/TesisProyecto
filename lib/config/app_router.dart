@@ -7,6 +7,7 @@ import 'package:flutter_tesis/presentation/profesor_screen/lista_notas_estudiant
 import 'package:flutter_tesis/presentation/profesor_screen/url.dart';
 import 'package:flutter_tesis/presentation/profesor_screen/estudiante_tarea.dart';
 import 'package:flutter_tesis/presentation/screens.dart';
+import 'package:flutter_tesis/presentation/screens/H5P.dart';
 import 'package:flutter_tesis/presentation/screens/calificaciones.dart';
 import 'package:flutter_tesis/presentation/screens/chat.dart';
 import 'package:flutter_tesis/presentation/screens/database.dart';
@@ -297,6 +298,30 @@ final appRouter = GoRouter(
           );
         },
       ),
+
+ /* GoRoute(
+      path: '/h5p',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return H5PScreen(
+          moduleId: extra['moduleId'], // Recibimos el ID
+          title: extra['title'],       // Recibimos el Título
+        );
+      },
+    ),*/
+
+    GoRoute(
+      path: '/h5p',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return H5PScreen(
+          moduleId: extra['moduleId'],
+          title: extra['title'],
+          // Recibimos el tipo, si no viene (por error), asumimos el moderno
+          modName: extra['modName'] ?? 'h5pactivity', 
+        );
+      },
+    ),
 
   ],  
 );
