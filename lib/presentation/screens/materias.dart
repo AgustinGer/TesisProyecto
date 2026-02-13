@@ -465,6 +465,20 @@ class Materias extends ConsumerWidget {
                           );
                         break;
 
+
+                        case 'scorm':
+                          final int cmid = int.parse(module['id'].toString());
+                          final String scormTitle = module['name'] ?? 'Paquete SCORM';
+
+                          context.push(
+                            '/scorm', 
+                            extra: {
+                              'moduleId': cmid,
+                              'title': scormTitle,
+                            }
+                          );
+                        break;
+
                         default:
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Este tipo de contenido no es soportado aún.')),

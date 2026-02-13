@@ -19,6 +19,7 @@ import 'package:flutter_tesis/presentation/screens/glosario.dart';
 import 'package:flutter_tesis/presentation/screens/leccion.dart';
 import 'package:flutter_tesis/presentation/screens/mensajes.dart';
 import 'package:flutter_tesis/presentation/screens/paquete_ims.dart';
+import 'package:flutter_tesis/presentation/screens/paquete_scorm.dart';
 import 'package:go_router/go_router.dart';
 
 
@@ -330,6 +331,17 @@ final appRouter = GoRouter(
       builder: (context, state) {
         final extra = state.extra as Map<String, dynamic>;
         return ImsScreen(
+          moduleId: extra['moduleId'],
+          title: extra['title'],
+        );
+      },
+    ),
+
+    GoRoute(
+      path: '/scorm',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return ScormScreen(
           moduleId: extra['moduleId'],
           title: extra['title'],
         );
