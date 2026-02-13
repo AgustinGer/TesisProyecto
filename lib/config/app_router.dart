@@ -18,6 +18,7 @@ import 'package:flutter_tesis/presentation/screens/foro.dart';
 import 'package:flutter_tesis/presentation/screens/glosario.dart';
 import 'package:flutter_tesis/presentation/screens/leccion.dart';
 import 'package:flutter_tesis/presentation/screens/mensajes.dart';
+import 'package:flutter_tesis/presentation/screens/paquete_ims.dart';
 import 'package:go_router/go_router.dart';
 
 
@@ -318,6 +319,17 @@ final appRouter = GoRouter(
       builder: (context, state) {
         final extra = state.extra as Map<String, dynamic>;
         return LessonScreen(
+          moduleId: extra['moduleId'],
+          title: extra['title'],
+        );
+      },
+    ),
+
+    GoRoute(
+      path: '/imscp',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return ImsScreen(
           moduleId: extra['moduleId'],
           title: extra['title'],
         );

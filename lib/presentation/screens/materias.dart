@@ -451,6 +451,20 @@ class Materias extends ConsumerWidget {
                         );
                         break;
 
+
+                        case 'imscp':
+                          final int cmid = int.parse(module['id'].toString());
+                          final String imsTitle = module['name'] ?? 'Paquete IMS';
+
+                          context.push(
+                            '/imscp', 
+                            extra: {
+                              'moduleId': cmid,
+                              'title': imsTitle,
+                            }
+                          );
+                        break;
+
                         default:
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Este tipo de contenido no es soportado aún.')),
