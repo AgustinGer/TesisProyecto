@@ -479,7 +479,6 @@ class Materias extends ConsumerWidget {
                           );
                         break;
 
-
                         case 'feedback':
                           final int cmid = int.parse(module['id'].toString());
                           final String feedbackTitle = module['name'] ?? 'Retroalimentación';
@@ -491,6 +490,19 @@ class Materias extends ConsumerWidget {
                               'title': feedbackTitle,
                             }
                           );
+                        break;
+
+                      case 'wiki':
+                        final int cmid = int.parse(module['id'].toString());
+                        final String wikiTitle = module['name'] ?? 'Wiki';
+
+                        context.push(
+                          '/wiki', 
+                          extra: {
+                            'moduleId': cmid,
+                            'title': wikiTitle,
+                          }
+                        );
                         break;
 
                         default:
