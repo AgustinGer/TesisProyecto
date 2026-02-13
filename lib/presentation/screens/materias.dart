@@ -479,6 +479,20 @@ class Materias extends ConsumerWidget {
                           );
                         break;
 
+
+                        case 'feedback':
+                          final int cmid = int.parse(module['id'].toString());
+                          final String feedbackTitle = module['name'] ?? 'Retroalimentación';
+
+                          context.push(
+                            '/feedback', 
+                            extra: {
+                              'moduleId': cmid,
+                              'title': feedbackTitle,
+                            }
+                          );
+                        break;
+
                         default:
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Este tipo de contenido no es soportado aún.')),
