@@ -18,6 +18,7 @@ import 'package:flutter_tesis/presentation/screens/foro.dart';
 import 'package:flutter_tesis/presentation/screens/glosario.dart';
 import 'package:flutter_tesis/presentation/screens/leccion.dart';
 import 'package:flutter_tesis/presentation/screens/mensajes.dart';
+import 'package:flutter_tesis/presentation/screens/pagina.dart';
 import 'package:flutter_tesis/presentation/screens/paquete_ims.dart';
 import 'package:flutter_tesis/presentation/screens/paquete_scorm.dart';
 import 'package:flutter_tesis/presentation/screens/retroalimentacion.dart';
@@ -369,6 +370,29 @@ final appRouter = GoRouter(
         final extra = state.extra as Map<String, dynamic>;
         return WikiScreen(
           moduleId: extra['moduleId'],
+          title: extra['title'],
+        );
+      },
+    ),
+
+ /*  GoRoute(
+      path: '/page',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return PageScreen(
+          moduleId: extra['moduleId'],
+          title: extra['title'],
+        );
+      },
+    ),*/
+
+    GoRoute(
+      path: '/page_native', // Le pongo _native para diferenciar
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return PageScreen(
+          pageInstanceId: extra['instanceId'],
+          courseId: extra['courseId'],
           title: extra['title'],
         );
       },

@@ -330,7 +330,7 @@ class Materias extends ConsumerWidget {
                         break;
                         // Caso 3: Es una etiqueta de texto o una página (para la introducción).
                         case 'label':
-                        case 'page':
+                  //      case 'page':
                           final String description = module['description'] ?? 'No hay descripción.';
                           // Navegamos a una nueva pantalla de descripción y le pasamos el texto.
                           print('Navegar a descripción: $description');
@@ -504,6 +504,38 @@ class Materias extends ConsumerWidget {
                           }
                         );
                         break;
+
+
+                        case 'page':
+                          // Para la API mod_page_get_pages_by_courses necesitamos el Instance ID (no el CMID)
+                          final int instanceId = int.parse(module['instance'].toString());
+                          final String pageTitle = module['name'] ?? 'Página';
+
+                          // OJO: Necesitamos el courseId. Asegúrate de tener esa variable disponible en este archivo.
+                          // (Debería estar disponible si la pasaste a la pantalla de Materias)
+
+                          context.push(
+                            '/page_native', 
+                            extra: {
+                              'instanceId': instanceId,
+                              'courseId': courseId, // <--- Importante: variable del ID del curso actual
+                              'title': pageTitle,
+                            }
+                          );
+                          break;
+
+                  /*      case 'page':
+                          final int cmid = int.parse(module['id'].toString());
+                          final String pageTitle = module['name'] ?? 'Página';
+
+                          context.push(
+                            '/page', 
+                            extra: {
+                              'moduleId': cmid,
+                              'title': pageTitle,
+                            }
+                          );
+                          break;*/
 
                         default:
                           ScaffoldMessenger.of(context).showSnackBar(
