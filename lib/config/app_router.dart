@@ -16,6 +16,7 @@ import 'package:flutter_tesis/presentation/screens/discusion.dart';
 import 'package:flutter_tesis/presentation/screens/eleccion.dart';
 import 'package:flutter_tesis/presentation/screens/foro.dart';
 import 'package:flutter_tesis/presentation/screens/glosario.dart';
+import 'package:flutter_tesis/presentation/screens/leccion.dart';
 import 'package:flutter_tesis/presentation/screens/mensajes.dart';
 import 'package:go_router/go_router.dart';
 
@@ -299,17 +300,6 @@ final appRouter = GoRouter(
         },
       ),
 
- /* GoRoute(
-      path: '/h5p',
-      builder: (context, state) {
-        final extra = state.extra as Map<String, dynamic>;
-        return H5PScreen(
-          moduleId: extra['moduleId'], // Recibimos el ID
-          title: extra['title'],       // Recibimos el Título
-        );
-      },
-    ),*/
-
     GoRoute(
       path: '/h5p',
       builder: (context, state) {
@@ -319,6 +309,17 @@ final appRouter = GoRouter(
           title: extra['title'],
           // Recibimos el tipo, si no viene (por error), asumimos el moderno
           modName: extra['modName'] ?? 'h5pactivity', 
+        );
+      },
+    ),
+
+    GoRoute(
+      path: '/lesson',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return LessonScreen(
+          moduleId: extra['moduleId'],
+          title: extra['title'],
         );
       },
     ),

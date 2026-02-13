@@ -406,21 +406,6 @@ class Materias extends ConsumerWidget {
                         );
                         break;
 
-                      /*  case 'h5pactivity': // Nombre interno en Moodle 3.9+ (o usa 'hvp' si es plugin antiguo)
-                        final int cmid = int.parse(module['id'].toString());
-                        final String h5pTitle = module['name'] ?? 'Actividad H5P';
-
-                        context.push(
-                          '/h5p', 
-                          extra: {
-                            'moduleId': cmid,
-                            'title': h5pTitle,
-                          }
-                        );
-                        break;*/
-
-                        // En Materias.dart -> dentro del switch (modname)
-
                         // CASO 1: H5P Nativo (Azul)
                         case 'h5pactivity': 
                           final int cmid = int.parse(module['id'].toString());
@@ -450,6 +435,21 @@ class Materias extends ConsumerWidget {
                             }
                           );
                           break;
+
+                          // En Materias.dart -> dentro del switch (modname)
+
+                      case 'lesson':
+                        final int cmid = int.parse(module['id'].toString());
+                        final String lessonTitle = module['name'] ?? 'Lección';
+
+                        context.push(
+                          '/lesson', 
+                          extra: {
+                            'moduleId': cmid,
+                            'title': lessonTitle,
+                          }
+                        );
+                        break;
 
                         default:
                           ScaffoldMessenger.of(context).showSnackBar(
