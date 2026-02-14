@@ -7,6 +7,8 @@ import 'package:flutter_tesis/provider/course_content_provider.dart';
 import 'package:flutter_tesis/provider/user_profile.dart';
 import 'package:flutter_tesis/provider/user_role_provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 // 1. El widget ahora es un ConsumerWidget y recibe el courseId
 class Materias extends ConsumerWidget {
@@ -296,22 +298,56 @@ class Materias extends ConsumerWidget {
                           break;
 
                         // Caso 2: Es un enlace (URL), como un video.
-                        case 'url':
+                  /*      case 'url':
                           final List contents = module['contents'] ?? [];
                           if (contents.isNotEmpty) {
                             // Obtenemos la URL externa del primer archivo.
                             final String videoUrl = contents[0]['fileurl'] ?? '';
                             if (videoUrl.isNotEmpty) {
-                              // Aquí puedes navegar a una pantalla de video o lanzarla directamente.
-                              // Por ahora, la lanzaremos con url_launcher.
-                              // Asegúrate de tener la lógica para añadir el token.
-                              // _downloadFile(ref, videoUrl); // Reutilizando la función de descarga
                               print('Navegar a video: $videoUrl');
-                             // final int moduleId = int.parse(module['id'].toString());
                               context.push('/videos', extra: {'title': module['name'], 'url': videoUrl});
                             }
                           }
-                         break;
+                         break;*/
+
+
+                         case 'url':
+                        // 1. Obtener la URL del contenido
+                        String resourceUrl = "";
+                        if (module['contents'] != null && (module['contents'] as List).isNotEmpty) {
+                          resourceUrl = module['contents'][0]['fileurl'] ?? "";
+                        }
+
+                        // A veces Moodle manda la URL sucia con parámetros, la limpiamos si es necesario
+                        // Pero YoutubePlayer suele manejarlo bien.
+                        
+                        // 2. VERIFICAR SI ES YOUTUBE
+                        // Esta función devuelve null si NO es un video de YouTube
+                        String? videoId = YoutubePlayer.convertUrlToId(resourceUrl);
+
+                        if (videoId != null) {
+                          // === CASO A: ES YOUTUBE ===
+                          // Navegamos a TU pantalla de video nativa
+                          context.push(
+                            '/videos', 
+                            extra: {
+                              'title': module['name'] ?? 'Video',
+                              'url': resourceUrl,
+                            }
+                          );
+                        } else {
+                          // === CASO B: ES OTRA COSA (Wikipedia, Drive, PDF externo) ===
+                          // Abrimos el navegador externo (Web Launcher)
+                          final uri = Uri.parse(resourceUrl);
+                          try {
+                              launchUrl(uri, mode: LaunchMode.externalApplication);
+                          } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("No se pudo abrir el enlace")),
+                              );
+                          }
+                        }
+                        break;
                          
                                                 // Dentro del switch (modname) en el onTap
                         case 'assign':

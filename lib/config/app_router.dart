@@ -99,6 +99,7 @@ final appRouter = GoRouter(
       },
     ),
 
+
     GoRoute(
         path: '/mensajes',
         builder: (context, state) => const MensajesScreen(),
@@ -261,31 +262,12 @@ final appRouter = GoRouter(
           databaseInstanceId: dbId,
           title: extras['title'] ?? 'Base de Datos',
           moduleId: extras['moduleId'] ?? 0,
-          
-          // --- AGREGAMOS LOS CAMPOS FALTANTES ---
-          // Si no vienen en el extra, ponemos 0 o false por defecto para que no falle la app,
-          // pero OJO: si son 0, no podrás calificar.
           moduleContextId: extras['contextId'] ?? 0, 
           courseId: extras['courseId'] ?? 0,
           isTeacher: extras['isTeacher'] ?? false,
         );
       },
     ),
-
-    // En tu configuración de GoRouter
-   /* GoRoute(
-      path: '/eleccion',
-      builder: (context, state) {
-        final extra = state.extra as Map<String, dynamic>;
-        return EleccionScreen(
-          choiceId: extra['choiceId'],
-          moduleId: extra['moduleId'],
-          title: extra['title'],
-          
-        );
-      },
-    ),*/
-
 
     // RUTA PARA LA ACTIVIDAD DE ELECCIÓN (CHOICE)
       GoRoute(
