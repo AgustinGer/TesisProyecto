@@ -543,13 +543,8 @@ class Materias extends ConsumerWidget {
 
 
                         case 'page':
-                          // Para la API mod_page_get_pages_by_courses necesitamos el Instance ID (no el CMID)
                           final int instanceId = int.parse(module['instance'].toString());
                           final String pageTitle = module['name'] ?? 'Página';
-
-                          // OJO: Necesitamos el courseId. Asegúrate de tener esa variable disponible en este archivo.
-                          // (Debería estar disponible si la pasaste a la pantalla de Materias)
-
                           context.push(
                             '/page_native', 
                             extra: {
@@ -560,18 +555,38 @@ class Materias extends ConsumerWidget {
                           );
                           break;
 
-                  /*      case 'page':
-                          final int cmid = int.parse(module['id'].toString());
-                          final String pageTitle = module['name'] ?? 'Página';
-
+                        /*
+                          case 'book':
+                          // OJO AQUÍ: 'instance' es el ID que necesita la API del libro
+                          final int instanceId = int.parse(module['instance'].toString()); 
+                          
+                          // 'id' es solo para abrirlo en la web
+                          final int cmid = int.parse(module['id'].toString());             
+                          
                           context.push(
-                            '/page', 
+                            '/book', 
                             extra: {
-                              'moduleId': cmid,
-                              'title': pageTitle,
+                              'bookId': instanceId, // <--- Asegúrate que esto vaya al parámetro bookId
+                              'cmid': cmid,
+                              'title': module['name'],
                             }
                           );
                           break;*/
+
+                          
+                          case 'book':
+                          // Para la versión web, SOLO necesitamos el 'id' (Course Module ID)
+                          final int cmid = int.parse(module['id'].toString());
+                          final String bookTitle = module['name'] ?? 'Libro';
+
+                          context.push(
+                            '/book', 
+                            extra: {
+                              'cmid': cmid, // Usamos cmid, no instance
+                              'title': bookTitle,
+                            }
+                          );
+                          break;
 
                         default:
                           ScaffoldMessenger.of(context).showSnackBar(

@@ -1,18 +1,98 @@
-import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tesis/provider/auth_provider.dart';
-import 'package:http/http.dart' as http;
-import 'package:dio/dio.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:open_filex/open_filex.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 
+class BookWebScreen extends ConsumerWidget {
+  final int cmid; // El ID del módulo (no el instance ID)
+  final String title;
+
+  const BookWebScreen({
+    super.key,
+    required this.cmid,
+    required this.title,
+  });
+
+  Future<void> _abrirEnNavegador(BuildContext context, String apiUrl) async {
+    // Limpiamos la URL de la API para obtener la base
+    final baseUrl = apiUrl.replaceAll('/webservice/rest/server.php', '');
+    
+    // URL estándar para ver un Libro en Moodle
+    final url = '$baseUrl/mod/book/view.php?id=$cmid';
+    final uri = Uri.parse(url);
+
+    try {
+      if (!await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication, // Abre en Chrome/Navegador externo
+      )) {
+        throw Exception('No se pudo abrir el enlace');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final apiUrl = ref.watch(moodleApiUrlProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Libro Digital'),
+        backgroundColor: Colors.indigo,
+        foregroundColor: Colors.white,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Icono de Libro
+            const Icon(Icons.menu_book_rounded, size: 80, color: Colors.indigo),
+            const SizedBox(height: 20),
+            
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 15),
+            
+            const Text(
+              "Este libro contiene múltiples capítulos y formato enriquecido. Para una mejor experiencia de lectura, se abrirá en tu navegador.",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey, fontSize: 16),
+            ),
+            const SizedBox(height: 40),
+
+            SizedBox(
+              width: double.infinity,
+              height: 55,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.indigo,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 3,
+                ),
+                icon: const Icon(Icons.open_in_browser),
+                label: const Text("ABRIR LIBRO", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                onPressed: () => _abrirEnNavegador(context, apiUrl),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+/*
 
 // --- PANTALLA PRINCIPAL DEL LIBRO ---
 class BookScreen extends ConsumerStatefulWidget {
@@ -43,32 +123,49 @@ class _BookScreenState extends ConsumerState<BookScreen> {
     _cargarCapitulos();
   }
 
-  // --- 1. CARGAR CAPÍTULOS DESDE MOODLE ---
+  // --- 1. CARGAR CAPÍTULOS CON DEBUG ---
   Future<void> _cargarCapitulos() async {
     final token = ref.read(authTokenProvider);
     final apiUrl = ref.read(moodleApiUrlProvider);
+
+    print("--- DEBUG LIBRO ---");
+    print("ID Libro (Instance): ${widget.bookId}");
+    print("Token: $token");
 
     try {
       final response = await http.post(
         Uri.parse(apiUrl),
         body: {
           'wstoken': token,
-          'wsfunction': 'mod_book_get_book_contents', // API específica de libros
+          'wsfunction': 'mod_book_get_book_contents',
           'moodlewsrestformat': 'json',
           'bookid': widget.bookId.toString(),
         },
       );
 
+      print("RESPUESTA MOODLE: ${response.body}"); // <--- AQUÍ VEREMOS EL ERROR REAL
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         
-        // La API devuelve una lista directa de capítulos bajo 'items' o directamente la lista
+        // Verificamos si Moodle devolvió una excepción
+        if (data is Map && data.containsKey('exception')) {
+           print("ERROR API: ${data['message']}");
+           if (mounted) {
+             ScaffoldMessenger.of(context).showSnackBar(
+               SnackBar(content: Text('Error Moodle: ${data['message']}'), backgroundColor: Colors.red),
+             );
+           }
+           setState(() => _isLoading = false);
+           return;
+        }
+
         List items = [];
         if (data is Map && data.containsKey('items')) {
           items = data['items'];
-        } else if (data is List) {
-          // A veces devuelve error o lista vacía
-        }
+        } 
+
+        print("Capítulos encontrados: ${items.length}");
 
         if (items.isNotEmpty) {
           setState(() {
@@ -80,7 +177,7 @@ class _BookScreenState extends ConsumerState<BookScreen> {
         }
       }
     } catch (e) {
-      print("Error cargando libro: $e");
+      print("Error conexión: $e");
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -433,4 +530,4 @@ class _EmbeddedYoutubePlayerState extends State<EmbeddedYoutubePlayer> {
   @override void initState() { super.initState(); var id=YoutubePlayer.convertUrlToId(widget.url); if(id!=null){_ok=true;_c=YoutubePlayerController(initialVideoId:id,flags:const YoutubePlayerFlags(autoPlay:false,mute:false));}}
   @override void dispose() { if(_ok)_c.dispose(); super.dispose(); }
   @override Widget build(BuildContext context) { if(!_ok)return const SizedBox(); return Container(margin:const EdgeInsets.symmetric(vertical:10), child:YoutubePlayer(controller:_c, bottomActions:[CurrentPosition(),ProgressBar(isExpanded:true),RemainingDuration()])); }
-}
+}*/

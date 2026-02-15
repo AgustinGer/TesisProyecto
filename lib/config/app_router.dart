@@ -8,6 +8,7 @@ import 'package:flutter_tesis/presentation/profesor_screen/url.dart';
 import 'package:flutter_tesis/presentation/profesor_screen/estudiante_tarea.dart';
 import 'package:flutter_tesis/presentation/screens.dart';
 import 'package:flutter_tesis/presentation/screens/H5P.dart';
+import 'package:flutter_tesis/presentation/screens/book.dart';
 import 'package:flutter_tesis/presentation/screens/calificaciones.dart';
 import 'package:flutter_tesis/presentation/screens/chat.dart';
 import 'package:flutter_tesis/presentation/screens/database.dart';
@@ -375,6 +376,30 @@ final appRouter = GoRouter(
         return PageScreen(
           pageInstanceId: extra['instanceId'],
           courseId: extra['courseId'],
+          title: extra['title'],
+        );
+      },
+    ),
+
+  /*  GoRoute(
+      path: '/book',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return BookScreen(
+          bookId: extra['bookId'],
+          cmid: extra['cmid'],
+          title: extra['title'],
+        );
+      },
+    ),*/
+
+    GoRoute(
+      path: '/book',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return BookWebScreen(
+          // Nota: Aquí ya NO necesitamos el 'bookId' (instance), solo el 'cmid'
+          cmid: extra['cmid'], 
           title: extra['title'],
         );
       },
