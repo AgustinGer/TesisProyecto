@@ -608,6 +608,23 @@ class Materias extends ConsumerWidget {
                           break;
 
 
+                          case 'workshop':
+                            final int instanceId = int.parse(module['instance'].toString());
+                            final int cmid = int.parse(module['id'].toString());
+                            final String workshopTitle = module['name'] ?? 'Taller';
+
+                            context.push(
+                              '/workshop', 
+                              extra: {
+                                'instanceId': instanceId,
+                                'courseId': courseId, 
+                                'cmid': cmid,
+                                'title': workshopTitle,
+                              }
+                            );
+                          break;
+
+
                         default:
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Este tipo de contenido no es soportado aún.')),

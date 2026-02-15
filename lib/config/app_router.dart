@@ -24,6 +24,7 @@ import 'package:flutter_tesis/presentation/screens/pagina.dart';
 import 'package:flutter_tesis/presentation/screens/paquete_ims.dart';
 import 'package:flutter_tesis/presentation/screens/paquete_scorm.dart';
 import 'package:flutter_tesis/presentation/screens/retroalimentacion.dart';
+import 'package:flutter_tesis/presentation/screens/taller.dart';
 import 'package:flutter_tesis/presentation/screens/wiki.dart';
 import 'package:go_router/go_router.dart';
 
@@ -413,6 +414,21 @@ final appRouter = GoRouter(
         return QuizScreen(
           quizInstanceId: extra['instanceId'],
           courseId: extra['courseId'], // Necesitamos el courseId para la API
+          cmid: extra['cmid'],
+          title: extra['title'],
+        );
+      },
+    ),
+
+// Importar WorkshopScreen.dart
+
+    GoRoute(
+      path: '/workshop',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return WorkshopScreen(
+          instanceId: extra['instanceId'],
+          courseId: extra['courseId'],
           cmid: extra['cmid'],
           title: extra['title'],
         );
