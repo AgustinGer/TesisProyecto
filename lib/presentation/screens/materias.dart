@@ -588,6 +588,26 @@ class Materias extends ConsumerWidget {
                           );
                           break;
 
+                        case 'quiz':
+                          final int instanceId = int.parse(module['instance'].toString());
+                          final int cmid = int.parse(module['id'].toString());
+                          final String quizTitle = module['name'] ?? 'Examen';
+
+                          // Asegúrate de tener disponible la variable courseId en este punto
+                          // (igual que hicimos con PageScreen)
+                          
+                          context.push(
+                            '/quiz', 
+                            extra: {
+                              'instanceId': instanceId,
+                              'courseId': courseId, // <--- Importante pasarlo
+                              'cmid': cmid,
+                              'title': quizTitle,
+                            }
+                          );
+                          break;
+
+
                         default:
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Este tipo de contenido no es soportado aún.')),

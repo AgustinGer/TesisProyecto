@@ -15,6 +15,7 @@ import 'package:flutter_tesis/presentation/screens/database.dart';
 import 'package:flutter_tesis/presentation/screens/description.dart';
 import 'package:flutter_tesis/presentation/screens/discusion.dart';
 import 'package:flutter_tesis/presentation/screens/eleccion.dart';
+import 'package:flutter_tesis/presentation/screens/examen.dart';
 import 'package:flutter_tesis/presentation/screens/foro.dart';
 import 'package:flutter_tesis/presentation/screens/glosario.dart';
 import 'package:flutter_tesis/presentation/screens/leccion.dart';
@@ -400,6 +401,19 @@ final appRouter = GoRouter(
         return BookWebScreen(
           // Nota: Aquí ya NO necesitamos el 'bookId' (instance), solo el 'cmid'
           cmid: extra['cmid'], 
+          title: extra['title'],
+        );
+      },
+    ),
+
+  GoRoute(
+      path: '/quiz',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return QuizScreen(
+          quizInstanceId: extra['instanceId'],
+          courseId: extra['courseId'], // Necesitamos el courseId para la API
+          cmid: extra['cmid'],
           title: extra['title'],
         );
       },
