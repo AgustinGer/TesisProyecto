@@ -8,15 +8,18 @@ import 'package:flutter_tesis/presentation/profesor_screen/url.dart';
 import 'package:flutter_tesis/presentation/profesor_screen/estudiante_tarea.dart';
 import 'package:flutter_tesis/presentation/screens.dart';
 import 'package:flutter_tesis/presentation/screens/H5P.dart';
+import 'package:flutter_tesis/presentation/screens/actividades.dart';
 import 'package:flutter_tesis/presentation/screens/book.dart';
 import 'package:flutter_tesis/presentation/screens/calificaciones.dart';
 import 'package:flutter_tesis/presentation/screens/chat.dart';
 import 'package:flutter_tesis/presentation/screens/database.dart';
 import 'package:flutter_tesis/presentation/screens/description.dart';
-import 'package:flutter_tesis/presentation/screens/discusion.dart';
+//import 'package:flutter_tesis/presentation/screens/discusion.dart';
 import 'package:flutter_tesis/presentation/screens/eleccion.dart';
 import 'package:flutter_tesis/presentation/screens/examen.dart';
-import 'package:flutter_tesis/presentation/screens/foro.dart';
+import 'package:flutter_tesis/presentation/screens/foro_discucion.dart';
+import 'package:flutter_tesis/presentation/screens/forum.dart';
+//import 'package:flutter_tesis/presentation/screens/foro.dart';
 import 'package:flutter_tesis/presentation/screens/glosario.dart';
 import 'package:flutter_tesis/presentation/screens/leccion.dart';
 import 'package:flutter_tesis/presentation/screens/mensajes.dart';
@@ -135,7 +138,7 @@ final appRouter = GoRouter(
       },
     ),
     
-    GoRoute(
+/*    GoRoute(
     path: '/foro/:forumId',
     builder: (context, state) {
     final forumId = int.parse(state.pathParameters['forumId']!);
@@ -143,14 +146,38 @@ final appRouter = GoRouter(
       },
     ),
 
-    // En tu app_router.dart
     GoRoute(
       // La ruta espera el ID de la discusión
       path: '/foro/discusion/:discussionId',
-    //  path: '/discusion/:discussionId',
       builder: (context, state) {
         final discussionId = int.parse(state.pathParameters['discussionId']!);
         return DiscussionDetailScreen(discussionId: discussionId);
+      },
+    ),*/
+
+  GoRoute(
+      path: '/forum',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return ForumScreen(
+          instanceId: extra['instanceId'],
+          courseId: extra['courseId'],
+          cmid: extra['cmid'],
+          title: extra['title'],
+        );
+      },
+    ),
+
+    // Importar ForumDiscussionScreen.dart
+
+    GoRoute(
+      path: '/forum/discussion', // Ruta hija o nueva ruta
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return ForumDiscussionScreen(
+          discussionId: extra['discussionId'],
+          subject: extra['subject'],
+        );
       },
     ),
 
@@ -360,16 +387,6 @@ final appRouter = GoRouter(
       },
     ),
 
- /*  GoRoute(
-      path: '/page',
-      builder: (context, state) {
-        final extra = state.extra as Map<String, dynamic>;
-        return PageScreen(
-          moduleId: extra['moduleId'],
-          title: extra['title'],
-        );
-      },
-    ),*/
 
     GoRoute(
       path: '/page_native', // Le pongo _native para diferenciar
@@ -382,18 +399,6 @@ final appRouter = GoRouter(
         );
       },
     ),
-
-  /*  GoRoute(
-      path: '/book',
-      builder: (context, state) {
-        final extra = state.extra as Map<String, dynamic>;
-        return BookScreen(
-          bookId: extra['bookId'],
-          cmid: extra['cmid'],
-          title: extra['title'],
-        );
-      },
-    ),*/
 
     GoRoute(
       path: '/book',

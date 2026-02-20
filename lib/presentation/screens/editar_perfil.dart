@@ -1,22 +1,17 @@
 import 'dart:convert';
 import 'dart:io'; // Necesario para manejar archivos (File)
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tesis/provider/auth_provider.dart';
 import 'package:flutter_tesis/provider/user_profile.dart';
 ///import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
-// Importa tus providers
-//import 'package:flutter_tesis/providers/auth_provider.dart';
-//import 'package:flutter_tesis/providers/user_profile_provider.dart';
 
-//import 'dart:convert';
-//import 'dart:io';
-// Función para actualizar datos en Moodle
-
-// Ajusta según tu proyecto
 class EditarPerfil extends ConsumerStatefulWidget {
   const EditarPerfil({Key? key}) : super(key: key);
 
@@ -28,13 +23,16 @@ class _EditarPerfilState extends ConsumerState<EditarPerfil> {
   final _descriptionController = TextEditingController();
   final _interestsController = TextEditingController();
 
+  String _rawHtmlDescription = ''; // Guardará el HTML original de Moodle
   String _initialDescription = '';
   String _initialInterests = '';
   bool _hasChanges = false;
-  bool _isInitialized = false; 
+  bool _isInitialized = false;
 
   File? _pickedImage;
   bool _isLoading = false;
+  
+  bool _hasComplexMedia = false; 
 
   @override
   void initState() {
@@ -61,34 +59,98 @@ class _EditarPerfilState extends ConsumerState<EditarPerfil> {
     super.dispose();
   }
 
+  // --- DETECTOR DE MULTIMEDIA ---
+  bool _detectComplexMedia(String htmlContent) {
+    final lowerHtml = htmlContent.toLowerCase();
+    return lowerHtml.contains('<video') || 
+           lowerHtml.contains('<audio') || 
+           lowerHtml.contains('<iframe') || 
+           lowerHtml.contains('<table') || 
+           lowerHtml.contains('h5p');
+  }
 
+  // --- ABRIR WEB ---
+  Future<void> _abrirEditarEnWeb() async {
+    final apiUrl = ref.read(moodleApiUrlProvider);
+    final userId = ref.read(userIdProvider);
+    final baseUrl = apiUrl.replaceAll('/webservice/rest/server.php', '');
+    
+    final url = '$baseUrl/user/edit.php?id=$userId&course=1';
+    
+    try {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se pudo abrir el navegador web.')));
+      }
+    }
+  }
+
+  // --- WIDGET BOTÓN MULTIMEDIA EXTERNO ---
+  Widget _buildExternalContentButton(String? url, String label, IconData icon) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.orange.shade200),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: Colors.orange.shade800, size: 30),
+          const SizedBox(height: 5),
+          Text(label, style: TextStyle(color: Colors.orange.shade900, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+          const SizedBox(height: 5),
+          const Text("Visualización web recomendada", style: TextStyle(fontSize: 12, color: Colors.grey)),
+          const SizedBox(height: 10),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.open_in_browser, size: 16),
+            label: const Text("Ver en Navegador"),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
+            onPressed: () async {
+              if (url != null && url.isNotEmpty) {
+                await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+              } else {
+                _abrirEditarEnWeb(); 
+              }
+            },
+          )
+        ],
+      ),
+    );
+  }
+
+  // --- DIÁLOGO DE SALIDA ---
   Future<void> _showExitDialog() async {
     final shouldPop = await showAdaptiveDialog<bool>(
       context: context,
       builder: (context) => AlertDialog.adaptive(
-        title: const Text('Cambios sin Guardar'),
-        content: const Text('¿Estás seguro de que quieres salir sin guardar los datos?'),
+        title: const Text('Cambios sin Guardar', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: const Text('¿Estás seguro de que quieres salir? Perderás los cambios no guardados.'),
         actions: [
           TextButton(
-            child: const Text('Regresar'),
+            child: const Text('Regresar', style: TextStyle(color: Colors.grey)),
             onPressed: () => Navigator.of(context).pop(false),
           ),
           TextButton(
-            child: const Text('Salir'),
+            child: const Text('Salir', style: TextStyle(color: Colors.red)),
             onPressed: () => Navigator.of(context).pop(true),
           ),
         ],
       ),
     );
 
-        if (shouldPop ?? false) {
-      if(mounted) Navigator.of(context).pop();
+    if (shouldPop ?? false) {
+      if (mounted) Navigator.of(context).pop();
     }
   }
 
+  // --- SELECCIONAR IMAGEN ---
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
 
     if (pickedFile != null) {
       setState(() => _pickedImage = File(pickedFile.path));
@@ -96,17 +158,48 @@ class _EditarPerfilState extends ConsumerState<EditarPerfil> {
     }
   }
 
-  // ================== ACTUALIZAR IMAGEN ==================
-  Future<void> _uploadImage() async {
-    if (_pickedImage == null) return;
-
+  // ================== FLUJO UNIFICADO DE GUARDADO ==================
+  Future<void> _guardarTodo() async {
+    FocusScope.of(context).unfocus();
     setState(() => _isLoading = true);
 
+    try {
+      if (_pickedImage != null) {
+        await _uploadImageProcess();
+      }
+
+      if (!_hasComplexMedia && (_descriptionController.text != _initialDescription || _interestsController.text != _initialInterests)) {
+        await _updateProfileTextProcess();
+      }
+
+      ref.invalidate(userProfileProvider);
+      
+      setState(() {
+        _hasChanges = false;
+        _pickedImage = null;
+        _initialDescription = _descriptionController.text;
+        _initialInterests = _interestsController.text;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('¡Perfil actualizado con éxito!'), backgroundColor: Colors.green),
+        );
+      }
+
+    } on SocketException catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sin conexión. Revisa tu internet.'), backgroundColor: Colors.orange));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ${e.toString().replaceAll("Exception: ", "")}'), backgroundColor: Colors.red, duration: const Duration(seconds: 4)));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _uploadImageProcess() async {
     final token = ref.read(authTokenProvider);
     final userId = ref.read(userIdProvider);
-    final apiUrl = ref.watch(moodleApiUrlProvider);
-
-    if (token == null || userId == null) return;
+    final apiUrl = ref.read(moodleApiUrlProvider);
 
     final filename = _pickedImage!.path.split('/').last;
     final bytes = await _pickedImage!.readAsBytes();
@@ -123,124 +216,61 @@ class _EditarPerfilState extends ConsumerState<EditarPerfil> {
       'instanceid': userId.toString(),
     };
 
-    try {
-      // Subir imagen al draft
-      final response = await http.post(
-        Uri.parse('$apiUrl?wsfunction=core_files_upload&wstoken=$token&moodlewsrestformat=json'),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: body,
-      );
+    final response = await http.post(
+      Uri.parse('$apiUrl?wsfunction=core_files_upload&wstoken=$token&moodlewsrestformat=json'),
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: body,
+    );
 
-      final responseData = json.decode(response.body);
-      if (responseData.containsKey('exception')) {
-        throw Exception('Error subiendo imagen: ${responseData['message']}');
-      }
+    final responseData = json.decode(response.body);
+    if (responseData is Map && responseData.containsKey('exception')) throw Exception(responseData['message'] ?? 'Moodle rechazó la imagen.');
 
-      final draftItemId = responseData['itemid'];
+    final draftItemId = responseData['itemid'];
 
-      // Actualizar la imagen del usuario
-      final updateResponse = await http.post(
-        Uri.parse('$apiUrl?wsfunction=core_user_update_picture&wstoken=$token&moodlewsrestformat=json'),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {
-          'draftitemid': draftItemId.toString(),
-          'userid': userId.toString(),
-        },
-      );
-    //  ref.invalidate(userProfileProvider);
-      
-      final updateData = json.decode(updateResponse.body);
-      if (updateData['success'] == true) {
-        ref.invalidate(userProfileProvider);
-       // setState(() {
-       //   _initialDescription = _descriptionController.text;
-       //   _initialInterests = _interestsController.text;
-       // });
-      setState(() {
-        _hasChanges = false;
-        _pickedImage = null;
-        _initialDescription = _descriptionController.text;
-        _initialInterests = _interestsController.text;
-      });
+    final updateResponse = await http.post(
+      Uri.parse('$apiUrl?wsfunction=core_user_update_picture&wstoken=$token&moodlewsrestformat=json'),
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: {
+        'draftitemid': draftItemId.toString(),
+        'userid': userId.toString(),
+      },
+    );
 
-
-       // setState(() {
-       // _hasChanges = false;
-       // });
-       
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Imagen actualizada con éxito'), backgroundColor: Colors.green),
-        );
-        setState(() => _pickedImage = null); // Limpiar imagen seleccionada
-      } else {
-        throw Exception('Error al actualizar imagen');
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error subiendo imagen: $e'), backgroundColor: Colors.red),
-      );
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    final updateData = json.decode(updateResponse.body);
+    if (updateData['success'] != true) throw Exception('Moodle no pudo vincular la foto.');
   }
 
-  // ================== ACTUALIZAR PERFIL (DESCRIPCIÓN/INTERESES) ==================
-  Future<void> _updateProfile() async {
-    setState(() => _isLoading = true);
-
+  Future<void> _updateProfileTextProcess() async {
     final token = ref.read(authTokenProvider);
     final userId = ref.read(userIdProvider);
-    final apiUrl = ref.watch(moodleApiUrlProvider);
+    final apiUrl = ref.read(moodleApiUrlProvider);
 
-    if (token == null || userId == null) return;
+    final response = await http.post(
+      Uri.parse('$apiUrl?wsfunction=core_user_update_users&wstoken=$token&moodlewsrestformat=json'),
+      body: {
+        'users[0][id]': userId.toString(),
+        'users[0][description]': _descriptionController.text.trim(),
+        'users[0][interests]': _interestsController.text.trim(),
+      },
+    );
 
-    try {
-      final response = await http.post(
-        Uri.parse('$apiUrl?wsfunction=core_user_update_users&wstoken=$token&moodlewsrestformat=json'),
-        body: {
-          'users[0][id]': userId.toString(),
-          'users[0][description]': _descriptionController.text,
-          'users[0][interests]': _interestsController.text,
-        },
-      );
- //     ref.invalidate(userProfileProvider); 
-      final responseData = json.decode(response.body);
-      if (responseData is List && responseData.isNotEmpty && responseData[0]['exception'] != null) {
-        throw Exception('Error al actualizar perfil: ${responseData[0]['message']}');
-      }
-
-     ref.invalidate(userProfileProvider);
-     // setState(() {
-     //   _initialDescription = _descriptionController.text;
-     //   _initialInterests = _interestsController.text;
-     // });
-     // setState(() {
-     // _hasChanges = false;
-     // });
-           setState(() {
-        _hasChanges = false;
-        _pickedImage = null;
-        _initialDescription = _descriptionController.text;
-        _initialInterests = _interestsController.text;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Perfil actualizado con éxito'), backgroundColor: Colors.green),
-      );
-
-
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error actualizando perfil: $e'), backgroundColor: Colors.red),
-      );
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+    final responseData = json.decode(response.body);
+    if (responseData is List && responseData.isNotEmpty && responseData[0]['exception'] != null) {
+      throw Exception(responseData[0]['message'] ?? 'Error al guardar datos de texto.');
     }
   }
 
+  void _onLinkTapped(String? url) async {
+    if (url != null) launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  }
+
+  // =======================================================
+  // CONSTRUCCIÓN DE LA INTERFAZ
+  // =======================================================
   @override
   Widget build(BuildContext context) {
     final asyncProfile = ref.watch(userProfileProvider);
+    final token = ref.watch(authTokenProvider);
 
     return PopScope(
       canPop: !_hasChanges,
@@ -249,72 +279,271 @@ class _EditarPerfilState extends ConsumerState<EditarPerfil> {
         _showExitDialog();
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('EDITAR PERFIL'), centerTitle: true),
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          title: const Text('Editar Perfil', style: TextStyle(fontWeight: FontWeight.bold)),
+          backgroundColor: Colors.indigo,
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
         body: asyncProfile.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(child: Text('Error al cargar perfil: $err')),
+          error: (err, stack) => Center(child: Text('Error al cargar perfil:\n$err', textAlign: TextAlign.center)),
           data: (user) {
+            
             if (!_isInitialized) {
-              _initialDescription = (user['description'] ?? '').replaceAll(RegExp(r'<[^>]*>'), '').trim();
+              _rawHtmlDescription = user['description'] ?? '';
+              _hasComplexMedia = _detectComplexMedia(_rawHtmlDescription);
+              
+              _initialDescription = _rawHtmlDescription.replaceAll(RegExp(r'<[^>]*>'), '').trim();
               _initialInterests = user['interests'] ?? '';
+              
               _descriptionController.text = _initialDescription;
               _interestsController.text = _initialInterests;
               _isInitialized = true;
             }
 
-            return ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                const Text('Descripción', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                TextField(controller: _descriptionController,
-                maxLines: null ,
-                keyboardType: TextInputType.multiline,
-                textInputAction: TextInputAction.done, 
-                decoration: const InputDecoration(border: OutlineInputBorder()),
-                onSubmitted: (_) {
-                  FocusScope.of(context).unfocus(); // 👈 cierra el teclado
-                },),
-                const SizedBox(height: 24),
-                const Text('Intereses', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                TextField(controller: _interestsController, decoration: const InputDecoration(border: OutlineInputBorder())),
-                const SizedBox(height: 24),
-                const Text('Imagen de Usuario', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: _pickImage,
-                  child: Container(
-                    height: 200,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey),
-                      image: _pickedImage != null
-                          ? DecorationImage(image: FileImage(_pickedImage!), fit: BoxFit.cover)
-                          : (user['profileimageurl'] != null && user['profileimageurl'].isNotEmpty)
-                              ? DecorationImage(image: NetworkImage(user['profileimageurl']), fit: BoxFit.cover)
-                              : null,
-                    ),
-                    child: (_pickedImage == null && (user['profileimageurl'] == null || user['profileimageurl'].isEmpty))
-                        ? const Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.cloud_upload_outlined, size: 60, color: Colors.grey), SizedBox(height: 8), Text('Toca para cambiar de imagen')]))
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: 32),
-                _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : FilledButton(
-                        onPressed: () async {
-                          if (_pickedImage != null) {
-                            await _uploadImage();
-                          }
-                          await _updateProfile();
-                        },
-                        child: const Text('Guardar Cambios'),
+            final profileImageUrl = user['profileimageurl'];
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  
+                  // --- AVATAR ---
+                  Center(
+                    child: GestureDetector(
+                      onTap: _pickImage,
+                      child: Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          Container(
+                            width: 130,
+                            height: 130,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.indigo.shade50,
+                              border: Border.all(color: Colors.indigo.shade200, width: 3),
+                              image: _pickedImage != null
+                                  ? DecorationImage(image: FileImage(_pickedImage!), fit: BoxFit.cover)
+                                  : (profileImageUrl != null && profileImageUrl.isNotEmpty)
+                                      ? DecorationImage(image: NetworkImage(profileImageUrl), fit: BoxFit.cover)
+                                      : null,
+                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))],
+                            ),
+                            child: (_pickedImage == null && (profileImageUrl == null || profileImageUrl.isEmpty))
+                                ? Icon(Icons.person, size: 70, color: Colors.indigo.shade200) : null,
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.indigo,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                          ),
+                        ],
                       ),
-              ],
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  const Center(child: Text("Toca la foto para cambiarla", style: TextStyle(color: Colors.grey, fontSize: 13))),
+                  
+                  const SizedBox(height: 35),
+                  
+                  // --- CAMPO SOBRE MÍ ---
+                  const Text('Sobre mí', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87)),
+                  const SizedBox(height: 10),
+                  
+                  if (_hasComplexMedia) ...[
+                    // ADVERTENCIA
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(color: Colors.orange.shade50, border: Border.all(color: Colors.orange.shade200), borderRadius: BorderRadius.circular(12)),
+                      child: Column(
+                        children: [
+                          const Row(
+                            children: [
+                              Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
+                              SizedBox(width: 10),
+                              Expanded(child: Text("Tu descripción contiene contenido multimedia (videos, H5P o tablas).", style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w500))),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          const Text("Para evitar borrar tu contenido interactivo accidentalmente, la edición de texto ha sido deshabilitada.", style: TextStyle(fontSize: 13, color: Colors.black54)),
+                          const SizedBox(height: 15),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              icon: const Icon(Icons.open_in_browser), label: const Text("Editar descripción en la Web"),
+                              style: OutlinedButton.styleFrom(foregroundColor: Colors.indigo, side: const BorderSide(color: Colors.indigo), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                              onPressed: _abrirEditarEnWeb,
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    
+                    // RENDERIZADO HTML DEL PERFIL (Igual que en PageScreen/ForumScreen)
+                    const Text('Vista previa de tu perfil:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.grey)),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade200)),
+                      child: Html(
+                        data: _rawHtmlDescription,
+                        style: {
+                          "body": Style(fontSize: FontSize(15.0), margin: Margins.zero, color: Colors.black87),
+                          "img": Style(width: Width(100, Unit.percent), height: Height.auto()),
+                          "iframe": Style(height: Height(200), width: Width(100, Unit.percent)),
+                          "video": Style(height: Height(200), width: Width(100, Unit.percent)),
+                        },
+                        onLinkTap: (url, _, __) => _onLinkTapped(url),
+                        extensions: [
+                          TagExtension(
+                            tagsToExtend: {"table"},
+                            builder: (ctx) => _buildExternalContentButton(null, "Tabla de Datos Compleja", Icons.table_chart_rounded),
+                          ),
+                          TagExtension(
+                            tagsToExtend: {"audio"},
+                            builder: (ctx) {
+                               final element = ctx.element;
+                               String src = element?.attributes['src'] ?? "";
+                               if (src.isEmpty && element != null) {
+                                for (var child in element.children) {
+                                  if (child.localName == 'source') src = child.attributes['src'] ?? "";
+                                }
+                              }
+                              return _buildExternalContentButton(src.isNotEmpty ? src : null, "Audio / Grabación", Icons.audiotrack_rounded);
+                            },
+                          ),
+                          TagExtension(
+                            tagsToExtend: {"video"},
+                            builder: (ctx) {
+                              final element = ctx.element;
+                              String src = element?.attributes['src'] ?? "";
+                              if (src.isEmpty && element != null) {
+                                for (var child in element.children) {
+                                  if (child.localName == 'source') src = child.attributes['src'] ?? "";
+                                }
+                              }
+                              if (src.isNotEmpty && YoutubePlayer.convertUrlToId(src) != null) {
+                                return EmbeddedYoutubePlayer(url: src);
+                              }
+                              return _buildExternalContentButton(src, "Video Formato Web", Icons.videocam_off);
+                            },
+                          ),
+                          TagExtension(
+                            tagsToExtend: {"iframe"},
+                            builder: (ctx) {
+                              final element = ctx.element;
+                              String src = element?.attributes['src'] ?? "";
+                              if (src.startsWith('//')) src = 'https:$src';
+                              if (YoutubePlayer.convertUrlToId(src) != null) {
+                                return EmbeddedYoutubePlayer(url: src);
+                              }
+                              return _buildExternalContentButton(src, "Contenido Interactivo", Icons.touch_app);
+                            },
+                          ),
+                          TagExtension(
+                            tagsToExtend: {"math"},
+                            builder: (ctx) => _buildExternalContentButton(null, "Ecuación Matemática", Icons.functions_rounded),
+                          ),
+                          TagExtension(
+                            tagsToExtend: {"time"},
+                            builder: (ctx) {
+                              final dateText = ctx.element?.text ?? "Fecha";
+                              return _buildExternalContentButton(null, "Dato de Tiempo: $dateText", Icons.access_time_filled_rounded);
+                            },
+                          ),
+                          TagExtension(
+                            tagsToExtend: {"object", "embed"},
+                            builder: (ctx) {
+                              final element = ctx.element;
+                              String src = element?.attributes['src'] ?? element?.attributes['data'] ?? "";
+                              return _buildExternalContentButton(src.isNotEmpty ? src : null, "Objeto Multimedia", Icons.extension_rounded);
+                            },
+                          ),
+                          TagExtension(
+                            tagsToExtend: {"img"},
+                            builder: (ctx) {
+                              String src = ctx.element?.attributes['src'] ?? "";
+                              if (src.contains('pluginfile.php') && !src.contains('token=')) { 
+                                src = src.contains('?') ? '$src&token=$token' : '$src?token=$token'; 
+                              }
+                              return ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(src, errorBuilder: (c,e,s) => const Icon(Icons.broken_image, color: Colors.grey))
+                              );
+                            },
+                          ),
+                        ]
+                      ),
+                    ),
+                  ] else ...[
+                    // MODO NORMAL (SIN MULTIMEDIA)
+                    TextFormField(
+                      controller: _descriptionController,
+                      maxLines: 5,
+                      minLines: 3,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: InputDecoration(
+                        hintText: "Escribe algo sobre ti...",
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.indigo, width: 2)),
+                      ),
+                    ),
+                  ],
+                  
+                  const SizedBox(height: 25),
+                  
+                  // --- CAMPO INTERESES ---
+                  const Text('Intereses', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87)),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _interestsController,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: InputDecoration(
+                      hintText: "Ej: Programación, Diseño, Música...",
+                      filled: true,
+                      fillColor: Colors.white,
+                      prefixIcon: const Icon(Icons.local_offer_outlined, color: Colors.grey),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.indigo, width: 2)),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 40),
+                  
+                  // --- BOTÓN DE GUARDAR ---
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: (_hasChanges && !_isLoading) ? _guardarTodo : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.indigo,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: Colors.grey.shade300,
+                        disabledForegroundColor: Colors.grey.shade500,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: _hasChanges ? 4 : 0,
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
+                          : const Text('Guardar Cambios', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
             );
           },
         ),
@@ -323,320 +552,54 @@ class _EditarPerfilState extends ConsumerState<EditarPerfil> {
   }
 }
 
-
-
-
-
-
-
-
-/*
-class EditarPerfil extends ConsumerStatefulWidget {
-  const EditarPerfil({super.key});
-
+// --- CLASE PARA YOUTUBE ---
+class EmbeddedYoutubePlayer extends StatefulWidget {
+  final String url;
+  const EmbeddedYoutubePlayer({super.key, required this.url});
   @override
-  ConsumerState<EditarPerfil> createState() => _EditarPerfilState();
+  State<EmbeddedYoutubePlayer> createState() => _EmbeddedYoutubePlayerState();
 }
 
-class _EditarPerfilState extends ConsumerState<EditarPerfil> {
-  // Controladores para los campos de texto
-  final _descriptionController = TextEditingController();
-  final _interestsController = TextEditingController();
+class _EmbeddedYoutubePlayerState extends State<EmbeddedYoutubePlayer> {
+  late YoutubePlayerController _controller;
+  bool _isValid = false;
 
-  String _initialDescription = '';
-  String _initialInterests = '';
-
-  bool _hasChanges = false; // Para saber si hay cambios
-  // Variable para guardar la imagen seleccionada
-  File? _pickedImage;
-  bool _isLoading = false;
-
-  // Función para seleccionar una imagen de la galería
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      setState(() {
-        _pickedImage = File(pickedFile.path);
-      });
-    }
-  }
   @override
   void initState() {
     super.initState();
-    // Añade 'listeners' para detectar cuando el usuario escribe algo
-    _descriptionController.addListener(_checkForChanges);
-    _interestsController.addListener(_checkForChanges);
-  }
-
-  void _checkForChanges() {
-    final hasChanged = _descriptionController.text != _initialDescription || 
-                       _interestsController.text != _initialInterests;
-    if (hasChanged != _hasChanges) {
-      setState(() {
-        _hasChanges = hasChanged;
-      });
+    final videoId = YoutubePlayer.convertUrlToId(widget.url);
+    if (videoId != null) {
+      _isValid = true;
+      _controller = YoutubePlayerController(
+        initialVideoId: videoId,
+        flags: const YoutubePlayerFlags(autoPlay: false, mute: false, enableCaption: false),
+      );
     }
   }
 
   @override
   void dispose() {
-    _descriptionController.removeListener(_checkForChanges);
-    _interestsController.removeListener(_checkForChanges);
-    _descriptionController.dispose();
-    _interestsController.dispose();
+    if (_isValid) _controller.dispose();
     super.dispose();
   }
 
-  Future<void> _showExitDialog() async {
-    final shouldPop = await showAdaptiveDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog.adaptive(
-        title: const Text('Cambios sin Guardar'),
-        content: const Text('¿Estás seguro de que quieres salir sin guardar los datos?'),
-        actions: [
-          TextButton(
-            child: const Text('Regresar'),
-            onPressed: () => Navigator.of(context).pop(false),
-          ),
-          TextButton(
-            child: const Text('Salir'),
-            onPressed: () => Navigator.of(context).pop(true),
-          ),
-        ],
-      ),
-    );
-
-        if (shouldPop ?? false) {
-      if(mounted) Navigator.of(context).pop();
-    }
-  }
-  // Función para guardar los cambios en Moodle
-  // En tu archivo editar_perfil.dart
-  // Función que muestra el diálogo de confirmación
-
-  
-Future<void> _saveProfile() async {
-  setState(() { _isLoading = true; });
-
-  final token = ref.read(authTokenProvider);
-  final userId = ref.read(userIdProvider);
-
-  if (token == null || userId == null) {
-    setState(() { _isLoading = false; });
-    return;
-  }
-
-  const String apiUrl = 'http://192.168.1.45/tesismovil/webservice/rest/server.php';
-   //final moodleApiUrl = ref.watch(moodleApiUrlProvider);
-  try {
-    await http.post(
-      Uri.parse(apiUrl),
-      body: {
-        'wstoken': token,
-        'wsfunction': 'core_user_update_users',
-        'moodlewsrestformat': 'json',
-        'users[0][id]': userId.toString(),
-        'users[0][description]': _descriptionController.text,
-        'users[0][interests]': _interestsController.text,
-      },
-    );
-
-    // --- PASO 2: Subir y asignar la imagen (si se seleccionó una nueva) ---
-    if (_pickedImage != null) {
-      
-        final uploadUrl = '$apiUrl?wsfunction=core_files_upload&wstoken=$token&moodlewsrestformat=json';
-  
-      var uploadRequest = http.MultipartRequest('POST', Uri.parse(uploadUrl))
-        ..fields.addAll({
-            'component': 'user',
-            'filearea': 'draft',
-            'itemid': '0',
-            'filepath': '/',
-            'filename': _pickedImage!.path.split('/').last,
-        })
-        ..files.add(await http.MultipartFile.fromPath(
-          'file',
-          _pickedImage!.path,
-          filename: _pickedImage!.path.split('/').last, 
-        ));
-print('--- CAMPOS DEL FORMULARIO ---');
-print(uploadRequest.fields);
-print('--- ARCHIVO ENVIADO ---');
-print(_pickedImage!.path);
-    //  var uploadRequest = http.MultipartRequest(...);
-      var uploadResponse = await uploadRequest.send();
-       var responseBody = await uploadResponse.stream.bytesToString();
-       //final uploadData = json.decode(responseBody);
-       
-
-          // --- AÑADE ESTE PRINT PARA DEPURAR ---
-      print('--- RESPUESTA DE SUBIDA DE ARCHIVO ---');
-      print(responseBody);
-      print('------------------------------------');
-  // ----------------------------------------
-      
-      if (uploadResponse.statusCode == 200) {
-        // 1. La respuesta es un Mapa, no una Lista.
-        // 1. La respuesta es un Objeto (Mapa), no una Lista.
-         final Map<String, dynamic> responseData = json.decode(responseBody);
-
-    // 2. Comprobamos si la respuesta es en realidad un error de Moodle.
-    if (responseData.containsKey('exception')) {
-      throw Exception('Error de Moodle: ${responseData['message']}');
-    }
-
-    // --- LA CORRECCIÓN FINAL ESTÁ AQUÍ ---
-    // 3. Accedemos al itemid DIRECTAMENTE desde el mapa, sin [0].
-    final int draftItemId = responseData['itemid'];
-
-    // 4. Asignamos la imagen (esta parte ya estaba bien).
-    await http.post(
-      Uri.parse(apiUrl),
-      body: {
-        'wstoken': token,
-        'wsfunction': 'core_user_update_picture',
-        'moodlewsrestformat': 'json',
-        'draftitemid': draftItemId.toString(),
-        'userid': userId.toString(),
-      },
-    );
-
-  } else{
-         throw Exception('Error al subir la imagen: ${responseBody}');
-      }
-    }
-
-    // Invalida el provider para que la pantalla de perfil se actualice
-    ref.invalidate(userProfileProvider);
-    
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Perfil actualizado con éxito'), backgroundColor: Colors.green)
-      );
-      Navigator.of(context).pop();
-    }
-
-  } catch (e) {
-    if(mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al guardar: $e'), backgroundColor: Colors.red)
-      );
-    }
-  } finally {
-     if(mounted) {
-      setState(() { _isLoading = false; });
-    }
-  }
-}
-
   @override
   Widget build(BuildContext context) {
-   // final colors = Theme.of(context).colorScheme;
-    // Escucha al provider del perfil para obtener los datos iniciales
-    final asyncProfile = ref.watch(userProfileProvider);
-
-    return PopScope(
-       canPop: !_hasChanges, // Bloquea el botón de atrás si hay cambios
-       onPopInvokedWithResult:(bool didPop, dynamic result) {
-       if (didPop) return;
-       _showExitDialog();
-     },
-
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('EDITAR PERFIL'),
-          centerTitle: true,
-        ),
-        // Muestra la UI según el estado del provider
-        body: asyncProfile.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(child: Text('Error al cargar perfil: $err')),
-          data: (user) {
-            // Asigna los datos iniciales a los controladores solo una vez
-           // _descriptionController.text = user['description'] ?? '';
-             // Extraemos la descripción con HTML
-            final String rawDescription = user['description'] ?? '';
-            if (!_hasChanges) {
-              _initialDescription = rawDescription.replaceAll(RegExp(r'<[^>]*>'), '').trim(); 
-              _initialInterests = user['interests'] ?? '';
-              _descriptionController.text = _initialDescription;
-              _interestsController.text = _initialInterests;
-            }      
-            // Limpiamos las etiquetas HTML y asignamos el texto limpio al controlador
-        //    _descriptionController.text = rawDescription.replaceAll(RegExp(r'<[^>]*>'), '').trim(); 
-        //    _interestsController.text = user['interests'] ?? '';
-      
-            return ListView(
-              padding: const EdgeInsets.all(16.0),
-              children: [
-                const Text('Descripción', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _descriptionController,
-                  maxLines: 4,
-                  decoration: const InputDecoration(border: OutlineInputBorder()),
-                ),
-                const SizedBox(height: 24),
-                
-                const Text('Intereses (separados por coma)', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _interestsController,
-                  decoration: const InputDecoration(border: OutlineInputBorder()),
-                ),
-                const SizedBox(height: 24),
-      
-               const Text('Imagen de Usuario', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: _pickImage,
-                  child: Container(
-                    height: 200,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey),
-                      // Muestra la imagen seleccionada o la imagen actual del usuario
-                      image: _pickedImage != null
-                          ? DecorationImage(image: FileImage(_pickedImage!), fit: BoxFit.cover)
-                          : (user['profileimageurl'] != null && user['profileimageurl'].isNotEmpty)
-                              ? DecorationImage(image: NetworkImage(user['profileimageurl']), fit: BoxFit.cover)
-                              : null,
-                    ),
-                    // Muestra el ícono de subir solo si no hay imagen
-                    child: (_pickedImage == null && (user['profileimageurl'] == null || user['profileimageurl'].isEmpty))
-                        ? const Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.cloud_upload_outlined, size: 60, color: Colors.grey),
-                                SizedBox(height: 8),
-                                Text('Toca para cambiar de imagen'),
-                              ],
-                            ),
-                          )
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: 32),
-                
-                _isLoading 
-                  ? const Center(child: CircularProgressIndicator())
-                  : FilledButton(
-                      onPressed: _saveProfile,
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16)
-                      ),
-                      child: const Text('Guardar Cambios'),
-                    ),
-              ],
-            );
-          },
+    if (!_isValid) return const SizedBox();
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: YoutubePlayer(
+          controller: _controller,
+          showVideoProgressIndicator: true,
+          bottomActions: [
+            CurrentPosition(),
+            ProgressBar(isExpanded: true),
+            RemainingDuration(),
+          ],
         ),
       ),
     );
   }
- }*/
+}

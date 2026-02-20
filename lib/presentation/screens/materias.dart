@@ -216,8 +216,26 @@ class Materias extends ConsumerWidget {
                   text: 'Cerrar Sesión',
                   textColor: Colors.red,
                   iconColor: Colors.red,
-                  onTap: () {
-                    // Tu lógica de logout
+                  onTap: () async {
+                    // 1. Cerramos el menú lateral (Drawer)
+                    Navigator.pop(context);
+
+                    // 2. DESTRUIMOS LA MEMORIA CACHÉ (Riverpod)
+                    // (Añade aquí cualquier otro provider global que uses, como el del rol o cursos)
+                    ref.invalidate(authTokenProvider);
+                    ref.invalidate(userIdProvider);
+                    ref.invalidate(userProfileProvider);
+                    // ref.invalidate(moodleApiUrlProvider); // Opcional, si cambia por usuario
+
+                    // Si estás usando SharedPreferences para guardar el token en el celular, 
+                    // también debes borrarlo aquí. Ejemplo:
+                    // final prefs = await SharedPreferences.getInstance();
+                    // await prefs.clear();
+
+                    // 3. REDIRIGIR BORRANDO EL HISTORIAL
+                    // No uses context.push (porque permite volver atrás). 
+                    // Usa context.go (si usas go_router) para destruir el historial de navegación.
+                    context.go('/login'); 
                   },
                 ),
               ],
@@ -373,11 +391,30 @@ class Materias extends ConsumerWidget {
                           context.push('/description', extra: description);
                           break;
                         
-                        case 'forum':
+              /*          case 'forum':
                         // El ID del foro se encuentra en la clave 'instance' del módulo
                         final int forumId = module['instance'];
                         print('DEBUG módulo forum: $module');
                         context.push('/foro/$forumId');
+                        break;*/
+
+
+                        // En Materias.dart -> switch(modname)
+
+                      case 'forum':
+                        final int instanceId = int.parse(module['instance'].toString());
+                        final int cmid = int.parse(module['id'].toString());
+                        final String forumTitle = module['name'] ?? 'Foro';
+
+                        context.push(
+                          '/forum', 
+                          extra: {
+                            'instanceId': instanceId,
+                            'courseId': courseId, 
+                            'cmid': cmid,
+                            'title': forumTitle,
+                          }
+                        );
                         break;
 
                         // Dentro del switch (modname) en Materias.dart
@@ -554,25 +591,6 @@ class Materias extends ConsumerWidget {
                             }
                           );
                           break;
-
-                        /*
-                          case 'book':
-                          // OJO AQUÍ: 'instance' es el ID que necesita la API del libro
-                          final int instanceId = int.parse(module['instance'].toString()); 
-                          
-                          // 'id' es solo para abrirlo en la web
-                          final int cmid = int.parse(module['id'].toString());             
-                          
-                          context.push(
-                            '/book', 
-                            extra: {
-                              'bookId': instanceId, // <--- Asegúrate que esto vaya al parámetro bookId
-                              'cmid': cmid,
-                              'title': module['name'],
-                            }
-                          );
-                          break;*/
-
                           
                           case 'book':
                           // Para la versión web, SOLO necesitamos el 'id' (Course Module ID)
