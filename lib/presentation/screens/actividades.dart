@@ -586,6 +586,13 @@ class _ActividadesScreenState extends ConsumerState<ActividadesScreen> {
         },
       );
 
+      if (saveResponse.body.isNotEmpty) {
+        final saveData = json.decode(saveResponse.body);
+        if (saveData is Map && (saveData.containsKey('exception') || saveData.containsKey('errorcode'))) {
+          throw Exception(saveData['message'] ?? 'Error desconocido al guardar la tarea en Moodle.');
+        }
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('¡Entrega múltiple exitosa!'), backgroundColor: Colors.green),
@@ -728,7 +735,7 @@ class _ActividadesScreenState extends ConsumerState<ActividadesScreen> {
     ];
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
     final asyncDetails = ref.watch(assignmentDetailsProvider(_detailsProviderParams));
     final token = ref.watch(authTokenProvider);
@@ -856,6 +863,304 @@ class _ActividadesScreenState extends ConsumerState<ActividadesScreen> {
                       }
                     }
 
+                    // 🔥 Lógica combinada para saber si permitimos subir archivos
+                    final bool isGraded = gradeValue != null;
+                    final bool canSubmit = !isPastDueDate && !isGraded;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Chip(
+                          avatar: Icon(status == 'submitted' ? Icons.check_circle : Icons.pending, color: status == 'submitted' ? Colors.green.shade700 : Colors.orange.shade700, size: 18),
+                          label: Text(status == 'submitted' ? 'Entregado' : 'Pendiente de entrega', style: TextStyle(color: status == 'submitted' ? Colors.green.shade900 : Colors.orange.shade900, fontWeight: FontWeight.bold)),
+                          backgroundColor: status == 'submitted' ? Colors.green.shade100 : Colors.orange.shade100,
+                          side: BorderSide.none,
+                        ),
+                        
+                        // --- CUADRO DE CALIFICACIÓN Y FEEDBACK ---
+                        if (isGraded) ...[
+                          const SizedBox(height: 15),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.green.shade200, width: 2),
+                              boxShadow: [BoxShadow(color: Colors.green.withOpacity(0.05), blurRadius: 10)],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.verified, color: Colors.green.shade600),
+                                    const SizedBox(width: 8),
+                                    const Text('Calificación Final', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                    const Spacer(),
+                                    Text('$formattedGrade / 100', style: TextStyle(fontSize: 18, color: Colors.green.shade700, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                                if (feedbackText.isNotEmpty) ...[
+                                  const Padding(padding: EdgeInsets.symmetric(vertical: 10), child: Divider()),
+                                  const Text('Retroalimentación del profesor:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black54)),
+                                  const SizedBox(height: 8),
+                                  Html(
+                                    data: feedbackText,
+                                    style: globalHtmlStyle,
+                                    onLinkTap: (url, _, __) => _onLinkTapped(url),
+                                    extensions: _getHtmlExtensions(token),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                        
+                        const SizedBox(height: 30),
+
+                        // --- UI PARA SUBIR ARCHIVO ---
+                        const Text('Tu Entrega', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.indigo)),
+                        const SizedBox(height: 12),
+                        
+                        GestureDetector(
+                          onTap: (!canSubmit || _isUploading) ? null : () => _pickFiles(maxFiles, maxSizeBytes),
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: (!canSubmit) ? Colors.grey.shade200 : Colors.indigo.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: (!canSubmit) ? Colors.grey.shade300 : Colors.indigo.shade200, style: BorderStyle.solid, width: 2)
+                            ),
+                            child: _pickedFiles.isEmpty
+                                ? Column(
+                                    children: [
+                                      Icon(Icons.cloud_upload_rounded, size: 50, color: (!canSubmit) ? Colors.grey : Colors.indigo.shade300),
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        isGraded ? 'Tarea calificada. Entregas bloqueadas.' : 
+                                        isPastDueDate ? 'Las entregas están cerradas' : 'Toca aquí para seleccionar archivos',
+                                        style: TextStyle(color: (!canSubmit) ? Colors.grey : Colors.indigo.shade700, fontWeight: FontWeight.bold),
+                                      ),
+                                      if (canSubmit)
+                                        Text('Máximo $maxFiles archivos permitidos', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                                    ],
+                                  )
+                                : Column(
+                                    children: [
+                                      ..._pickedFiles.map((file) => Container(
+                                        margin: const EdgeInsets.only(bottom: 8),
+                                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade300)),
+                                        child: ListTile(
+                                          leading: const Icon(Icons.insert_drive_file, color: Colors.indigo),
+                                          title: Text(file.path.split('/').last, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                                          trailing: IconButton(
+                                            icon: const Icon(Icons.cancel, color: Colors.redAccent),
+                                            onPressed: () => setState(() => _pickedFiles.remove(file)),
+                                          ),
+                                        ),
+                                      )),
+                                      if (_pickedFiles.length < maxFiles)
+                                        TextButton.icon(
+                                          onPressed: () => _pickFiles(maxFiles, maxSizeBytes),
+                                          icon: const Icon(Icons.add),
+                                          label: const Text('Añadir más archivos'),
+                                          style: TextButton.styleFrom(foregroundColor: Colors.indigo),
+                                        )
+                                    ],
+                                  ),
+                          ),
+                        ), 
+
+                        if (!canSubmit)
+                          Container(
+                            margin: const EdgeInsets.only(top: 15),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.red.shade100)),
+                            child: Row(
+                              children: [
+                                Icon(isGraded ? Icons.block : Icons.lock_clock, color: Colors.red.shade700),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    isGraded 
+                                      ? 'Esta tarea ya ha sido calificada. Ya no se permiten nuevas entregas o modificaciones.' 
+                                      : 'El plazo de entrega ha expirado. Ya no se permiten nuevas entregas o modificaciones.',
+                                    style: TextStyle(color: Colors.red.shade900, fontWeight: FontWeight.bold, fontSize: 13),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                        const SizedBox(height: 25),
+                                      
+                        if (_isUploading)
+                          const Center(child: CircularProgressIndicator())
+                        else
+                          SizedBox(
+                            width: double.infinity,
+                            height: 50,
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.send_rounded),
+                              label: Text('ENVIAR ${_pickedFiles.length} ARCHIVO${_pickedFiles.length == 1 ? '' : 'S'}', style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                              onPressed: (!canSubmit || _pickedFiles.isEmpty || _isUploading) ? null : _submitAssignment,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.indigo,
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor: Colors.grey.shade300,
+                                disabledForegroundColor: Colors.grey.shade500,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                elevation: (_pickedFiles.isEmpty || !canSubmit) ? 0 : 4,
+                              ),
+                            ) 
+                          ),
+                        const SizedBox(height: 30),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+
+/*
+  @override
+  Widget build(BuildContext context) {
+    final asyncDetails = ref.watch(assignmentDetailsProvider(_detailsProviderParams));
+    final token = ref.watch(authTokenProvider);
+    
+    // Estilo global base para el renderizado de HTML
+    final globalHtmlStyle = {
+      "body": Style(fontSize: FontSize(15.0), margin: Margins.zero, color: Colors.black87),
+      "img": Style(width: Width(100, Unit.percent), height: Height.auto()),
+      "iframe": Style(height: Height(200), width: Width(100, Unit.percent)),
+      "video": Style(height: Height(200), width: Width(100, Unit.percent)),
+    };
+
+    return Scaffold(
+      backgroundColor: Colors.grey[50], // Fondo limpio
+      appBar: AppBar(
+        title: const Text("Detalle de la Tarea", style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.indigo,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.open_in_browser),
+            tooltip: 'Abrir en navegador',
+            onPressed: _abrirActividadWeb,
+          ),
+        ],
+      ),
+      body: asyncDetails.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error al cargar detalles: $err')),
+        data: (details) {
+          final asyncStatus = ref.watch(submissionStatusProvider(widget.assignmentId));          
+                  
+          final String title = details['name'] ?? 'Tarea sin título';
+          final String intro = details['intro'] ?? '<p>Sin descripción.</p>';
+          final int dueDateTimestamp = details['duedate'] ?? 0;
+
+          final DateTime dueDate2 = DateTime.fromMillisecondsSinceEpoch(dueDateTimestamp * 1000);
+          final bool isPastDueDate = dueDateTimestamp != 0 && DateTime.now().isAfter(dueDate2);
+
+          final List configs = details['configs'] ?? [];
+          final maxFiles = int.parse(configs.firstWhere((c) => c['name'] == 'maxfilesubmissions', orElse: () => {'value': '1'})['value'].toString());
+          final maxSizeBytes = int.parse(configs.firstWhere((c) => c['name'] == 'maxsubmissionsizebytes', orElse: () => {'value': '0'})['value'].toString());
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                
+                // --- CABECERA DE LA TAREA ---
+                Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87)),
+                const SizedBox(height: 15),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: Colors.indigo.shade50, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.indigo.shade100)),
+                  child: Row(
+                    children: [
+                      Icon(Icons.event_available, color: Colors.indigo.shade700, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: RichText(
+                          text: TextSpan(
+                            style: const TextStyle(color: Colors.black87, fontSize: 14),
+                            children: [
+                              const TextSpan(text: 'Fecha de entrega: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                              TextSpan(text: _formatTimestamp(dueDateTimestamp)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 20),
+                const Text('Instrucciones:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.indigo)),
+                const SizedBox(height: 8),
+                
+                // --- RENDERIZADO SEGURO DE INSTRUCCIONES ---
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade200)),
+                  child: Html(
+                    data: intro,
+                    style: globalHtmlStyle,
+                    onLinkTap: (url, _, __) => _onLinkTapped(url),
+                    extensions: _getHtmlExtensions(token), // Inyectamos nuestro motor
+                  ),
+                ),
+                
+                const SizedBox(height: 30),
+
+                // --- SECCIÓN DE ESTADO, NOTA Y FEEDBACK ---
+                const Text('Estado de la entrega', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.indigo)),
+                const SizedBox(height: 10),
+                
+                asyncStatus.when(
+                  loading: () => const Text('Cargando estado...', style: TextStyle(color: Colors.grey)),
+                  error: (err, stack) => Text('Error al cargar estado: $err', style: const TextStyle(color: Colors.red)),
+                  data: (statusData) {
+                    final submission = statusData['lastattempt']?['submission'];
+                    final status = submission?['status'] ?? 'No entregado';
+                    
+                    final feedback = statusData['feedback'];
+                    final gradeData = feedback?['grade'];
+                    final List plugins = feedback?['plugins'] ?? [];
+
+                    final commentPlugin = plugins.firstWhere((p) => p['type'] == 'comments', orElse: () => null);
+                    
+                    String feedbackText = '';
+                    if (commentPlugin != null && commentPlugin['editorfields'] != null) {
+                      feedbackText = commentPlugin['editorfields'][0]['text'] ?? '';
+                    }
+
+                    double? gradeValue;
+                    String formattedGrade = 'Sin calificar';
+
+                    if (gradeData != null && gradeData['grade'] != null) {
+                      final rawGrade = gradeData['grade'];
+                      gradeValue = double.tryParse(rawGrade.toString());
+
+                      if (gradeValue != null) {
+                        formattedGrade = gradeValue.toStringAsFixed(2).replaceAll(RegExp(r'\.00$'), '');
+                      }
+                    }
+                    
+                    
+                    
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -909,6 +1214,8 @@ class _ActividadesScreenState extends ConsumerState<ActividadesScreen> {
                         ],
                       ],
                     );
+
+
                   },
                 ),
                 
@@ -1012,10 +1319,11 @@ class _ActividadesScreenState extends ConsumerState<ActividadesScreen> {
               ],
             ),
           );
+          
         },
       ),
     );
-  }
+  }*/
 }
 
 // --- CLASE PARA YOUTUBE ---
