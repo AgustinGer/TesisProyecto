@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tesis/models/course.dart';
 import 'package:flutter_tesis/presentation/widgets/side_menu.dart';
 import 'package:flutter_tesis/provider/course_provider.dart';
+import 'package:flutter_tesis/provider/user_profile.dart';
 import 'package:go_router/go_router.dart';
 
 class Inicio extends ConsumerWidget {
@@ -17,12 +18,38 @@ class Inicio extends ConsumerWidget {
 
     // 3. La llamada al provider ahora es simple. No se le pasan parámetros.
     final asyncCourses = ref.watch(coursesProvider);
+
+    final userProfileAsync = ref.watch(userProfileProvider);
+    final String userProfileUrl = userProfileAsync.value?['profileimageurl'] ?? '';
     
     return Scaffold(
       key: scaffoldKey,
       appBar: AppBar(
         title: const Text('Mis Cursos'),
         centerTitle: true,
+      
+      actions: [
+          GestureDetector(
+            onTap: () {
+              // Abre el endDrawer usando la llave del Scaffold
+              scaffoldKey.currentState?.openEndDrawer();
+            },
+            child: Container(
+              margin: const EdgeInsets.only(right: 16),
+              child: CircleAvatar(
+                radius: 18, // Un poquito más grande para que resalte
+                backgroundColor: Colors.indigo.shade300,
+                backgroundImage: userProfileUrl.isNotEmpty 
+                    ? NetworkImage(userProfileUrl) 
+                    : null,
+                child: userProfileUrl.isEmpty 
+                    ? const Icon(Icons.person, size: 20, color: Colors.white) 
+                    : null,
+              ),
+            ),
+          ),
+        ],
+      
       ),
       endDrawer: SideMenu(scaffoldKey: scaffoldKey),
       

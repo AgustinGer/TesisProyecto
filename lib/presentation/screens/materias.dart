@@ -913,6 +913,7 @@ void _dialogoNuevaSeccion(BuildContext context, WidgetRef ref, int courseId, int
   );
 }
 
+/*
 Widget getModuleIcon(String modname, Color primaryColor) {
   
   switch (modname) {
@@ -930,6 +931,61 @@ Widget getModuleIcon(String modname, Color primaryColor) {
       return const Icon(Icons.description_outlined);
   }
   
+}
+*/
+
+Widget getModuleIcon(String modname, Color primaryColor) {
+  switch (modname) {
+    // Actividades de Evaluación / Trabajo
+    case 'assign': 
+      return Icon(Icons.assignment_turned_in_outlined, color: Colors.orange.shade700);
+    case 'quiz': 
+      return const Icon(Icons.quiz_outlined, color: Colors.green);
+    case 'workshop': 
+      return const Icon(Icons.build_circle_outlined, color: Colors.deepPurple);
+    case 'choice': 
+      return const Icon(Icons.how_to_vote_outlined, color: Colors.teal);
+    case 'feedback': 
+      return const Icon(Icons.rate_review_outlined, color: Colors.amber);
+
+    // Contenido Interactivo / Lecciones
+    case 'lesson': 
+      return const Icon(Icons.menu_book_rounded, color: Colors.indigo);
+    case 'h5pactivity': 
+    case 'hvp': 
+      return const Icon(Icons.extension, color: Colors.black87);
+    case 'scorm': 
+    case 'imscp': 
+      return const Icon(Icons.inventory_2_outlined, color: Colors.brown);
+
+    // Colaboración / Foros / Wikis
+    case 'forum': 
+      return const Icon(Icons.forum_outlined, color: Colors.blue);
+    case 'wiki': 
+      return const Icon(Icons.group_work_outlined, color: Colors.cyan);
+    case 'glossary': 
+      return const Icon(Icons.sort_by_alpha, color: Colors.purple);
+    case 'data': // Base de Datos
+      return const Icon(Icons.storage_outlined, color: Colors.deepOrange);
+
+    // Recursos Estáticos (Archivos, Páginas, URLs)
+    case 'resource':
+      return Icon(Icons.picture_as_pdf_outlined, color: primaryColor); // Puedes ajustarlo si sabes que no siempre es PDF
+    case 'folder':
+      return const Icon(Icons.folder_copy_sharp, color: Colors.amber);
+    case 'url':
+      return const Icon(Icons.link, color: Colors.grey);
+    case 'page':
+      return const Icon(Icons.article_outlined, color: Colors.blueGrey);
+    case 'book':
+      return const Icon(Icons.auto_stories, color: Colors.green);
+    case 'label':
+      return const Icon(Icons.info_outline, color: Colors.grey);
+
+    // Por defecto, un ícono de documento genérico
+    default:
+      return const Icon(Icons.description_outlined, color: Colors.grey);
+  }
 }
 
 Widget _buildDrawerItem({
