@@ -4,8 +4,10 @@ import 'package:flutter_tesis/presentation/widgets/titulos_menu.dart';
 import 'package:flutter_tesis/provider/auth_provider.dart';
 //import 'package:flutter_tesis/provider/auth_provider.dart';
 import 'package:flutter_tesis/provider/user_profile.dart';
+import 'package:flutter_tesis/provider/user_role_provider.dart';
 //import 'package:flutter_tesis/provider/user_role_provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 /*
@@ -138,7 +140,7 @@ class _SideMenuState extends ConsumerState<SideMenu> {
 
     return NavigationDrawer(
       selectedIndex: navDrawerIndex,
-      onDestinationSelected: (value) {
+      onDestinationSelected: (value) async {
         setState(() {
           navDrawerIndex = value;
         });
@@ -152,16 +154,25 @@ class _SideMenuState extends ConsumerState<SideMenu> {
           // 1. Cerramos el menú lateral visualmente
           widget.scaffoldKey.currentState?.closeDrawer();
 
+// 2. PRIMERO BORRAMOS EL DISCO DURO (El trabajo asíncrono)
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.clear();
+
+          // 3. VERIFICACIÓN DE SEGURIDAD OBLIGATORIA EN FLUTTER
+          // Si el menú se cerró o se destruyó durante el 'await', detenemos el proceso aquí.
+          if (!context.mounted) return;
           // 2. Limpiamos TODA la caché de Riverpod del usuario actual
           ref.invalidate(authTokenProvider);
           ref.invalidate(userIdProvider);
           ref.invalidate(userProfileProvider);
-          // 🚨 IMPORTANTE: Añade aquí `ref.invalidate()` de cualquier otro 
-          // provider que guarde el rol, los cursos del profe, etc.
-          // Ejemplo: ref.invalidate(userRoleProvider);
-          
+
+          ref.invalidate(isAdminProvider); 
+          ref.invalidate(userCourseRoleProvider);
+          ref.invalidate(userRole);
           // 3. Destruimos el historial y volvemos al login de cero
+
           context.go('/login');
+
         } else {
           // Si es cualquier otra opción (Perfil, Calendario, Temas), navega normal
           context.push(tituloMenu.link);

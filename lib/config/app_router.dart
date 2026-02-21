@@ -1,6 +1,7 @@
 //import 'package:flutter/cupertino.dart';
 //import 'package:flutter_tesis/presentation/profesor_screen/assign.dart';
 
+import 'package:flutter_tesis/main.dart';
 import 'package:flutter_tesis/presentation/profesor_screen/calificar_tarea.dart';
 import 'package:flutter_tesis/presentation/profesor_screen/crear_tarea_screen.dart';
 import 'package:flutter_tesis/presentation/profesor_screen/lista_notas_estudiantes.dart';
@@ -36,6 +37,13 @@ import 'package:go_router/go_router.dart';
 final appRouter = GoRouter(
   initialLocation: '/login',
   routes: [
+
+   // 2️⃣ AÑADE ESTA RUTA PRINCIPAL
+    GoRoute(
+      path: '/',
+      builder: (context, state) => const SplashScreen(),
+    ),
+
     GoRoute(
       path: '/inicio',
        builder: (context, state) => const Inicio(),

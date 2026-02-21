@@ -7,6 +7,7 @@ import 'package:flutter_tesis/provider/course_content_provider.dart';
 import 'package:flutter_tesis/provider/user_profile.dart';
 import 'package:flutter_tesis/provider/user_role_provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
@@ -217,24 +218,31 @@ class Materias extends ConsumerWidget {
                   textColor: Colors.red,
                   iconColor: Colors.red,
                   onTap: () async {
-                    // 1. Cerramos el menú lateral (Drawer)
-                    Navigator.pop(context);
 
-                    // 2. DESTRUIMOS LA MEMORIA CACHÉ (Riverpod)
-                    // (Añade aquí cualquier otro provider global que uses, como el del rol o cursos)
+                    Navigator.pop(context);
+                    // 1. Cerramos el menú lateral (Drawer)
+
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.clear();
+
+                    if (!context.mounted) return;
+
+                    //Navigator.pop(context);
+
+
                     ref.invalidate(authTokenProvider);
                     ref.invalidate(userIdProvider);
                     ref.invalidate(userProfileProvider);
-                    // ref.invalidate(moodleApiUrlProvider); // Opcional, si cambia por usuario
+                    
+                    ref.invalidate(isAdminProvider); 
+                    ref.invalidate(userCourseRoleProvider);
 
-                    // Si estás usando SharedPreferences para guardar el token en el celular, 
-                    // también debes borrarlo aquí. Ejemplo:
-                    // final prefs = await SharedPreferences.getInstance();
-                    // await prefs.clear();
+               //     ref.invalidate(userRole);
+               //     ref.invalidate(courseContentProvider);
 
-                    // 3. REDIRIGIR BORRANDO EL HISTORIAL
-                    // No uses context.push (porque permite volver atrás). 
-                    // Usa context.go (si usas go_router) para destruir el historial de navegación.
+                    ref.invalidate(userRole(courseId)); 
+                    ref.invalidate(courseContentProvider(courseId));
+ 
                     context.go('/login'); 
                   },
                 ),

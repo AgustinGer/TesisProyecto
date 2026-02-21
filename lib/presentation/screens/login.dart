@@ -10,6 +10,7 @@ import 'package:flutter_tesis/provider/auth_provider.dart';
 //import 'package:flutter_tesis/provider/auth_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 // --- Pantalla de Login ---
 
@@ -109,6 +110,14 @@ class _BodyLoginState extends ConsumerState<BodyLogin> {
        ref.read(authTokenProvider.notifier).state = userToken;
        ref.read(userIdProvider.notifier).state = userId;
        ref.read(urlProvider.notifier).state = apiUrl;
+
+
+       // --- NUEVO: GUARDAR EN DISCO (MEMORIA PERSISTENTE) ---
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('user_token', userToken);
+        await prefs.setInt('user_id', userId);
+        await prefs.setBool('is_admin', isAdmin);
+
         // --- PASO 4: Navegar a la pantalla de inicio ---
         if (mounted) { // Verificación de seguridad
           //context.push('/inicio');

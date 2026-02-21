@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,8 +10,6 @@ import 'package:intl/intl.dart'; // Asegúrate de tener intl en pubspec.yaml
 import 'package:url_launcher/url_launcher.dart';
 //import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 //import 'package:dio/dio.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 //import 'package:open_filex/open_filex.dart';
 

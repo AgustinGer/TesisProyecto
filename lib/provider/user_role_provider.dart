@@ -4,9 +4,9 @@ import 'package:flutter_tesis/presentation/moodle_service.dart';
 import 'package:flutter_tesis/provider/auth_provider.dart';
 
 final userRole = FutureProvider.family<String, int>((ref, courseId) async {
-  final apiUrl = ref.read(moodleApiUrlProvider);
-  final token = ref.read(authTokenProvider);
-  final userId = ref.read(userIdProvider);
+  final apiUrl = ref.watch(moodleApiUrlProvider);
+  final token = ref.watch(authTokenProvider);
+  final userId = ref.watch(userIdProvider);
 
   if (token == null || userId == null) {
     throw Exception('Usuario no autenticado');
