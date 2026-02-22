@@ -75,7 +75,10 @@ class _CalificarDataBaseModalState extends ConsumerState<CalificarDataBaseModal>
 
         // Verificamos éxito: Moodle suele devolver "success": true o el objeto rating
         if (data is Map && (data['success'] == true || data.containsKey('rating'))) {
-          Navigator.pop(context); // Cerramos el modal
+          
+         // Navigator.pop(context); // Cerramos el modal
+          
+          Navigator.pop(context, _gradeController.text);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('¡Calificación guardada con éxito!'), backgroundColor: Colors.green),
           );

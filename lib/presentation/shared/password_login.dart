@@ -14,7 +14,7 @@ class _PasswordLoginState extends State<PasswordLogin> {
 
   @override
   Widget build(BuildContext context) {
-    final focusNode = FocusNode();
+    //final focusNode = FocusNode();
 
     final outlineInputBorder = UnderlineInputBorder(
       borderSide: const BorderSide(color: Colors.transparent),
@@ -40,7 +40,7 @@ class _PasswordLoginState extends State<PasswordLogin> {
     );
 
     return TextFormField(
-      focusNode: focusNode,
+    //  focusNode: focusNode,
       controller: widget.passwordcontroller,
       obscureText: _obscureText,
       decoration: inputDecoration,
@@ -54,44 +54,3 @@ class _PasswordLoginState extends State<PasswordLogin> {
   }
 }
 
-
-/*
-class PasswordLogin extends StatelessWidget {
-  final TextEditingController passwordcontroller;
-  const PasswordLogin({super.key, required this.passwordcontroller});
-
-  @override
-  Widget build(BuildContext context) {
-    final focusNode = FocusNode();
-
-    final outlineInputBorder = UnderlineInputBorder(
-      borderSide: const BorderSide(color: Colors.transparent),
-      borderRadius: BorderRadius.circular(5)
-    );
-
-    final inputDecoration = InputDecoration(
-      hintText: 'what is your password??',
-      enabledBorder: outlineInputBorder,
-      focusedBorder: outlineInputBorder,
-      filled: true,
-      suffixIcon: IconButton(
-        icon: const Icon(Icons.password),
-        onPressed: (){
-        },
-      ),
-    );
-
-    return TextFormField(
-      focusNode: focusNode,
-      controller: passwordcontroller,
-      obscureText: true,
-      decoration: inputDecoration,
-       validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Falta rellenar el campo password'; // Mensaje de error en rojo
-        }
-        return null; // Válido
-      },
-    );
-  }
-}*/

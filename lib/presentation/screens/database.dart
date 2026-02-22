@@ -47,6 +47,9 @@ class DatabaseScreen extends ConsumerStatefulWidget {
 class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
   final Map<String, double> _downloadProgress = {};
 
+
+  //final Map<int, String> _localRatings = {};
+
   // ... (TUS FUNCIONES DE PERMISOS Y DESCARGA SE MANTIENEN IGUAL) ...
   // [CÓDIGO DE _requestStoragePermission, _getDownloadPath, _startDownload, _downloadFile]
   // (Omití pegarlas de nuevo para no hacer gigante la respuesta, usa las del chat anterior)
@@ -117,16 +120,6 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
 
     final myUserId = ref.read(userIdProvider);
 
-    // 2. CARGAMOS CONFIGURACIÓN (Para saber si hay nota y la escala)
-   /* final configAsync = ref.watch(databaseConfigProvider(
-      {'courseId': widget.courseId, 'databaseId': widget.databaseInstanceId}
-    ));*/
-
-    // 3. CARGAMOS PROFESORES (Para no calificar al jefe de cátedra si eres auxiliar, o lógica similar)
-    // Asumo que tienes el provider courseTeachersProvider del glosario
-    //final teachersListAsync = ref.watch(courseTeachersProvider(widget.courseId));
-    
-    //final myUserId = ref.read(userIdProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -186,6 +179,14 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
                       // Condición para CALIFICAR
                       final bool canRate = widget.isTeacher && config.ratingsEnabled && !isMe;
 
+
+
+                      
+                      // 🔥 NUEVO: Verificamos si ya la calificamos en esta sesión
+                      final localRatings = ref.watch(localRatingsCacheProvider);
+                      final String? assignedGrade = localRatings[entry.id];
+                      final bool isGraded = assignedGrade != null;
+
                       return Row(
                         children: [
                           
@@ -218,14 +219,21 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
                           if (canRate)
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.orange.shade100,
-                                foregroundColor: Colors.orange.shade900,
+                                //backgroundColor: Colors.orange.shade100,
+                                //foregroundColor: Colors.orange.shade900,
+
+                                backgroundColor: isGraded ? Colors.green.shade100 : Colors.orange.shade100,
+                                foregroundColor: isGraded ? Colors.green.shade900 : Colors.orange.shade900,
                                 padding: const EdgeInsets.symmetric(horizontal: 12),
                                 visualDensity: VisualDensity.compact,
                               ),
-                              icon: const Icon(Icons.star, size: 16),
-                              label: const Text("Calificar"),
-                              onPressed: () {
+                            
+                              icon: Icon(isGraded ? Icons.check_circle : Icons.star, size: 16),
+                              label: Text(isGraded ? "Nota: $assignedGrade" : "Calificar"),
+
+                            //  icon: const Icon(Icons.star, size: 16),
+                            //  label: const Text("Calificar"),
+                             /* onPressed: () {
                                 showModalBottomSheet(
                                   context: context,
                                   isScrollControlled: true,
@@ -237,6 +245,31 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
                                     scaleId: config.scale == 0 ? 100 : config.scale,
                                   ),
                                 );
+                              },*/
+
+                              onPressed: () async {
+                                // Guardamos el resultado (la nota) que devuelve el modal al cerrarse
+                                final result = await showModalBottomSheet<String>(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  builder: (context) => CalificarDataBaseModal(
+                                    moduleId: widget.moduleId,  
+                                    entryId: entry.id,
+                                    ratedUserId: entry.userId,
+                                    studentName: 'Estudiante',
+                                    scaleId: config.scale == 0 ? 100 : config.scale,
+                                  ),
+                                );
+
+                                // Si el modal devolvió una nota (no se canceló), la guardamos
+                                if (result != null) {
+                                 ref.read(localRatingsCacheProvider.notifier).update((state) {
+                                    // Clonamos el mapa actual y le agregamos la nueva nota
+                                    return {...state, entry.id: result};
+                                 // setState(() {
+                                 //   localRatings[entry.id] = result;
+                                  });
+                                }
                               },
                             ),
                         ],
@@ -244,42 +277,6 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
                     },
                                         
                       
-                      /*final bool isMe = (entry.userId == myUserId);
-
-                      final bool showRating = widget.isTeacher && 
-                            config.ratingsEnabled && 
-                            !isMe;
-
-                      if (!showRating) return null;
-
-                      return Align(
-                        alignment: Alignment.centerLeft,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange.shade100,
-                            foregroundColor: Colors.orange.shade900,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                            visualDensity: VisualDensity.compact, // Botón más compacto
-                          ),
-                          icon: const Icon(Icons.star, size: 16),
-                          label: const Text("Calificar"),
-                          onPressed: () {
-                             showModalBottomSheet(
-                                context: context,
-                                isScrollControlled: true,
-                                builder: (context) => CalificarDataBaseModal(
-                                //  contextId: widget.moduleContextId,
-                                  moduleId: widget.moduleId,
-                                  entryId: entry.id,
-                                  ratedUserId: entry.userId,
-                                  studentName: 'Estudiante',
-                                  scaleId: config.scale == 0 ? 100 : config.scale,
-                                ),
-                              );
-                          },
-                        ),
-                      );
-                    },*/
                     loading: () => const Text("Cargando...", style: TextStyle(fontSize: 10)),
                     error: (_,__) => const SizedBox.shrink(),
                   ),
@@ -414,21 +411,6 @@ class _UserHeaderWidgetState extends ConsumerState<UserHeaderWidget> {
   }
 
   Future<void> _fetchUserData() async {
-    // 1. Si es el usuario logueado, usamos los datos locales (Optimización)
-   /* final myId = ref.read(userIdProvider);
-    if (widget.userId == myId) {
-      final myName = ref.read(userFullNameProvider); // Asegúrate de tener este provider o usa el nombre guardado
-      // Si no tienes provider de nombre, igual hacemos la petición
-      if (myName != null && myName.isNotEmpty) {
-         if (mounted) {
-           setState(() {
-             _fullName = myName; // O "Yo"
-             _isLoading = false;
-           });
-         }
-         return;
-      }
-    }*/
 
     // 2. Si es otro usuario, consultamos a Moodle
     try {

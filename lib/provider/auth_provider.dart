@@ -28,6 +28,8 @@ final isAdminProvider = StateProvider<bool>((ref) => false);
 // Rol del usuario en el curso actual
 final userCourseRoleProvider = StateProvider<String?>((ref) => null);
 
+final localRatingsCacheProvider = StateProvider<Map<int, String>>((ref) => {});
+
 
 // --- NUEVA FUNCIÓN PARA RECUPERAR SESIÓN ---
 Future<bool> checkSavedSession(WidgetRef ref) async {
