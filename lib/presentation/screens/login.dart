@@ -160,6 +160,7 @@ class _BodyLoginState extends ConsumerState<BodyLogin> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+
     return SafeArea(
         child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 75, vertical: 70),
@@ -182,7 +183,8 @@ class _BodyLoginState extends ConsumerState<BodyLogin> {
                 // color: Colors.black,
                  borderRadius: BorderRadius.circular(20),
                 // image: DecorationImage(image: NetworkImage('https://img.freepik.com/vector-premium/logo-nombre-universidad-logo-empresa-llamada-universidad_516670-732.jpg'),fit:BoxFit.cover ),
-                 image: DecorationImage(image: AssetImage( 'assets/imagenes/logo.png'), fit: BoxFit.fill),
+                 image: DecorationImage(image: AssetImage( 'assets/imagenes/logoEuler.png'), fit: BoxFit.fill),
+                
                   ),
                 ),
               ),
